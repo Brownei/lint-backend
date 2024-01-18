@@ -8,5 +8,6 @@ import { Collaborator } from 'src/utils/typeorm';
   imports: [TypeOrmModule.forFeature([Collaborator])],
   controllers: [CollaboratorsController],
   providers: [CollaboratorsService],
+  exports: [CollaboratorsService],
 })
 export class CollaboratorsModule {}

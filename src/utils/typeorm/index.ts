@@ -2,7 +2,6 @@
 import { Collaborator } from "./entities/Collaborator";
 import { Conversation } from "./entities/Conversation";
 import { Event } from "./entities/Event";
-import { ImageStorage } from "./entities/Image-Storage";
 import { Like } from "./entities/Like";
 import { MessageAttachment } from "./entities/Message-Attachment";
 import { Message } from "./entities/Message";
@@ -17,7 +16,6 @@ const entities = [
     Collaborator,
     Conversation,
     Event,
-    ImageStorage,
     Like,
     MessageAttachment,
     Message,
@@ -34,7 +32,6 @@ export {
     Collaborator,
     Conversation,
     Event,
-    ImageStorage,
     Like,
     MessageAttachment,
     Message,

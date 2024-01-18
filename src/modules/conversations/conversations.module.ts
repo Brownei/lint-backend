@@ -16,6 +16,6 @@ import { CollaboratorsService } from '../collaborators/collaborators.service';
   ],
   controllers: [ConversationsController],
   providers: [ConversationsService, UsersService, CollaboratorsService],
-  exports: [CollaboratorsService],
+  exports: [ConversationsService],
 })
 export class ConversationsModule {}
