@@ -11,6 +11,7 @@ import { JwtService } from '@nestjs/jwt';
 import { Request } from 'express';
 import { IS_PUBLIC_KEY } from '../decorators/public.decorator';
 import * as jwt from 'jsonwebtoken';
+import { AuthGuard } from '@nestjs/passport';
 
 @Injectable()
 export class AuthorizationGuard implements CanActivate {
@@ -34,18 +35,14 @@ export class AuthorizationGuard implements CanActivate {
             return true;
         }
 
-        const request = context.switchToHttp().getRequest();
+        const request = context.switchToHttp().getRequest<Request>();
         const token = this.extractTokenFromHeader(request);
-
-        if (!token) {
-            throw new UnauthorizedException();
-        }
 
         try {
             const payload = await this.jwtService.verifyAsync(token, {
                 secret: `${process.env.JWT_SECRET}`,
             });
-            request['user'] = payload;
+            request['email'] = payload;
         } catch {
             throw new UnauthorizedException();
         }
@@ -55,11 +52,11 @@ export class AuthorizationGuard implements CanActivate {
 }
 
 export const CurrentUser = createParamDecorator((data: any, ctx: ExecutionContext) => {
-    const request = ctx.switchToHttp().getRequest();
+    const request = ctx.switchToHttp().getRequest<Request>();
 
     // if route is protected, there is a user set in auth.middleware
-    if (!!request.user) {
-        return !!data ? request.user[data] : request.user;
+    if (!!request.session.user) {
+        return !!data ? request.session.user[data] : request.session.user;
     }
 
     // in case a route is not protected, we still want to get the optional auth user from jwt
@@ -69,3 +66,21 @@ export const CurrentUser = createParamDecorator((data: any, ctx: ExecutionContex
         return !!data ? decoded[data] : decoded.user;
     }
 });
+
+@Injectable()
+export class GoogleAuthGuard extends AuthGuard('google') {
+    async canActivate(context: ExecutionContext): Promise<boolean> {
+        const activate = (await super.canActivate(context)) as boolean;
+        const request = context.switchToHttp().getRequest();
+        await super.logIn(request);
+        return activate;
+    }
+}
+
+@Injectable()
+export class AuthenticationGuard implements CanActivate {
+    async canActivate(context: ExecutionContext): Promise<boolean> {
+        const request = context.switchToHttp().getRequest<Request>();
+        return request.isAuthenticated()
+    }
+}

@@ -8,6 +8,7 @@ import { User } from 'src/utils/typeorm';
 import { UsersModule } from 'src/modules/users/users.module';
 import { GoogleStrategy } from 'src/strategies/google.strategy';
 import { FacebookStrategy } from 'src/strategies/facebook.strategy';
+import { SessionSerializer } from 'src/guard/serializer';
 
 @Module({
   imports: [
@@ -19,7 +20,13 @@ import { FacebookStrategy } from 'src/strategies/facebook.strategy';
       signOptions: { expiresIn: '7d' },
     }),
   ],
-  providers: [UsersService, AuthService, GoogleStrategy, FacebookStrategy],
+  providers: [
+    UsersService,
+    AuthService,
+    GoogleStrategy,
+    FacebookStrategy,
+    SessionSerializer,
+  ],
   controllers: [AuthController],
   exports: [AuthService],
 })

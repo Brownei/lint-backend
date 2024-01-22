@@ -1,6 +1,6 @@
 /* eslint-disable prettier/prettier */
 import { Request } from '@nestjs/common';
-import { User } from './typeorm';
+import { User } from '../typeorm';
 import { Socket } from 'socket.io';
 
 export interface HTTPRequest extends Request {
@@ -22,5 +22,30 @@ export interface UserDetails {
 }
 
 export interface AuthenticatedSocket extends Socket {
-  user?: User;
+    user?: User;
+}
+
+
+declare module 'express-session' {
+    interface SessionData {
+        user: {
+            email: number;
+            firstName: string;
+            lastName: string;
+            picture: string;
+            accessToken: string;
+        };
+    }
+}
+
+declare module 'express' {
+    interface Request {
+        user: {
+            email: number;
+            firstName: string;
+            lastName: string;
+            picture: string;
+            accessToken: string;
+        };
+    }
 }

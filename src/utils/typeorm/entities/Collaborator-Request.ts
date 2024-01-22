@@ -5,8 +5,10 @@ import {
   CreateDateColumn,
   PrimaryGeneratedColumn,
   JoinColumn,
+  ManyToOne,
 } from 'typeorm';
 import { User } from './User';
+import { Post } from './Post';
 
 @Entity('collaborator-requests')
 export class CollaboratorRequest {
@@ -20,6 +22,11 @@ export class CollaboratorRequest {
   @OneToOne(() => User, { createForeignKeyConstraints: false })
   @JoinColumn()
   receiver: User;
+
+  @ManyToOne(() => Post, (post) => post.requests, {
+    onDelete: 'CASCADE',
+  })
+  post: Post;
 
   @CreateDateColumn()
   createdAt: number;

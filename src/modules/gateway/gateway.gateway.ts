@@ -9,7 +9,7 @@ import {
 } from '@nestjs/websockets';
 import { Server } from 'socket.io';
 import { OnEvent } from '@nestjs/event-emitter';
-import { Inject } from '@nestjs/common';
+import { Inject, Logger } from '@nestjs/common';
 import { GatewaySessionManager } from './gateway,.session';
 import { ConversationsService } from '../conversations/conversations.service';
 import { CollaboratorsService } from '../collaborators/collaborators.service';
@@ -41,15 +41,17 @@ export class MessagingGateway
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   handleConnection(socket: AuthenticatedSocket, ...args: any[]) {
-    console.log('Incoming Connection');
-    this.sessions.setUserSocket(socket.user.id, socket);
+    Logger.log('Incoming Connection');
+    console.log(socket.id);
+    this.sessions.setUserSocket(socket.id, socket);
     socket.emit('connected', {});
+    Logger.log('Connected successfully');
   }
 
   handleDisconnect(socket: AuthenticatedSocket) {
-    console.log('handleDisconnect');
-    console.log(`${socket.user.username} disconnected.`);
-    this.sessions.removeUserSocket(socket.user.id);
+    Logger.log('handleDisconnect');
+    this.sessions.removeUserSocket(socket.id);
+    Logger.log(`${socket.id} disconnected.`);
   }
 
   @SubscribeMessage('onConversationJoin')
@@ -58,7 +60,7 @@ export class MessagingGateway
     @ConnectedSocket() client: AuthenticatedSocket,
   ) {
     console.log(
-      `${client.user?.id} joined a Conversation of ID: ${data.conversationId}`,
+      `${client.id} joined a Conversation of ID: ${data.conversationId}`,
     );
     client.join(`conversation-${data.conversationId}`);
     console.log(client.rooms);
@@ -107,11 +109,11 @@ export class MessagingGateway
     } = message;
 
     const payload = { message, conversations };
-    const authorSocket = this.sessions.getUserSocket(author.id);
+    const authorSocket = this.sessions.getUserSocket(String(author.id));
     const recipientSocket =
       author.id === creator.id
-        ? this.sessions.getUserSocket(recipient.id)
-        : this.sessions.getUserSocket(creator.id);
+        ? this.sessions.getUserSocket(String(recipient.id))
+        : this.sessions.getUserSocket(String(creator.id));
 
     if (authorSocket) authorSocket.emit('onMessage', payload);
     if (recipientSocket) recipientSocket.emit('onMessage', payload);
@@ -120,7 +122,9 @@ export class MessagingGateway
   @OnEvent('conversation.create')
   handleConversationCreateEvent(payload: Conversation) {
     console.log('Inside conversation.create');
-    const recipientSocket = this.sessions.getUserSocket(payload.recipient.id);
+    const recipientSocket = this.sessions.getUserSocket(
+      String(payload.recipient.id),
+    );
     if (recipientSocket) recipientSocket.emit('onConversation', payload);
   }
 
@@ -135,8 +139,8 @@ export class MessagingGateway
     const { creator, recipient } = conversation;
     const recipientSocket =
       creator.id === payload.userId
-        ? this.sessions.getUserSocket(recipient.id)
-        : this.sessions.getUserSocket(creator.id);
+        ? this.sessions.getUserSocket(String(recipient.id))
+        : this.sessions.getUserSocket(String(creator.id));
     if (recipientSocket) recipientSocket.emit('onMessageDelete', payload);
   }
 
@@ -149,8 +153,8 @@ export class MessagingGateway
     console.log(message);
     const recipientSocket =
       author.id === creator.id
-        ? this.sessions.getUserSocket(recipient.id)
-        : this.sessions.getUserSocket(creator.id);
+        ? this.sessions.getUserSocket(String(recipient.id))
+        : this.sessions.getUserSocket(String(creator.id));
     if (recipientSocket) recipientSocket.emit('onMessageUpdate', message);
   }
 
@@ -168,9 +172,9 @@ export class MessagingGateway
       );
       const onlineCollaborators = collaborators.filter((collaborator) =>
         this.sessions.getUserSocket(
-          user.id === collaborator.receiver.id
-            ? collaborator.sender.id
-            : collaborator.receiver.id,
+          String(user.id) === String(collaborator.receiver.id)
+            ? String(collaborator.sender.id)
+            : String(collaborator.receiver.id),
         ),
       );
       socket.emit('getOnlineCollaborators', onlineCollaborators);

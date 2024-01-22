@@ -1,5 +1,13 @@
+import { CollaboratorRequest } from './Collaborator-Request';
 import { User } from './User';
-import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
+import {
+  Column,
+  Entity,
+  JoinColumn,
+  ManyToOne,
+  OneToMany,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
 
 @Entity('posts')
 export class Post {
@@ -26,6 +34,10 @@ export class Post {
 
   @Column()
   isPaid: boolean;
+
+  @OneToMany(() => CollaboratorRequest, (request) => request.post)
+  @JoinColumn()
+  requests: CollaboratorRequest[];
 
   @ManyToOne(() => User, (user) => user.post)
   user: User;

@@ -15,25 +15,13 @@ export class AuthService {
     private readonly jwtService: JwtService,
   ) {}
 
-  private async validateUser(email: string, password: string) {
+  async validateUser(email: string) {
     const user = await this.userService.findOneUserByEmail(email);
 
-    if (!user) {
-      throw new NotFoundException('User not found!');
-    }
-
-    const { password: hashedPassword, ...otherDetails } = user;
-
-    const correctPassword = await argon2.verify(password, hashedPassword);
-
-    if (!correctPassword) {
-      throw new ConflictException('Incorrect Password!');
-    }
-
-    return otherDetails;
+    if (user) return user;
   }
 
-  async login(email: string, password: string, res: Response) {
+  async login(email: string, password: string) {
     const user = await this.userService.findOneUserByEmail(email);
 
     if (!user) {
@@ -63,9 +51,7 @@ export class AuthService {
       secret: `${process.env.JWT_SECRET}`,
     });
 
-    res.cookie('session', accessToken);
-
-    return res.send('Logged in successfully');
+    return accessToken;
   }
 
   async googleLogin(req: any, res: Response) {
@@ -93,17 +79,10 @@ export class AuthService {
     }
 
     res.send(req.user);
+  }
 
-    // const currentUser = await this.userService.findOneUserByEmail(
-    //   req.user.email,
-    // );
-
-    // if (!currentUser) {
-    //   throw new UnauthorizedException();
-    // }
-
-    // res.cookie('session', req.user.accessToken);
-
-    // return res.send('Logged in successfully with google');
+  async findUser(email: string) {
+    const user = await this.userService.findOneUserByEmail(email);
+    return user;
   }
 }

@@ -12,6 +12,7 @@ import { ConversationsModule } from 'src/modules/conversations/conversations.mod
 import { PassportModule } from '@nestjs/passport';
 import { GatewayModule } from './modules/gateway/gateway.module';
 import entities from './utils/typeorm';
+import { EventEmitterModule } from '@nestjs/event-emitter';
 
 @Module({
   imports: [
@@ -35,6 +36,7 @@ import entities from './utils/typeorm';
       isGlobal: true,
     }),
     PassportModule.register({ session: true }),
+    EventEmitterModule.forRoot(),
     UsersModule,
     PostsModule,
     LikesModule,

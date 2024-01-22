@@ -3,6 +3,8 @@ import { AppModule } from './app.module';
 import { Logger, ValidationPipe } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import * as session from 'express-session';
+import * as passport from 'passport';
+import * as cookieParser from 'cookie-parser';
 
 async function server() {
   const docsRoute = 'docs';
@@ -19,22 +21,25 @@ async function server() {
 
   app.use(
     session({
+      secret: process.env.JWT_SECRET,
       resave: false,
       saveUninitialized: false,
-      name: 'user-session',
-      secret: process.env.JWT_SECRET,
       cookie: {
-        secure: false,
+        maxAge: 60000,
       },
     }),
   );
 
   app.enableCors({
-    origin: 'http://localhost:5173',
+    origin: ['http://localhost:5173'],
     credentials: true,
   });
+  app.use(cookieParser());
+  app.use(passport.initialize());
+  app.use(passport.session());
 
   app.useGlobalPipes(new ValidationPipe());
+  app.setGlobalPrefix('api');
 
   await app.listen(port);
   Logger.log(
