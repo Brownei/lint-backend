@@ -1,9 +1,8 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable, UnauthorizedException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Collaborator, CollaboratorRequest } from 'src/utils/typeorm';
 import { UsersService } from '../users/services/users.service';
-import { UserNotFoundException } from 'src/utils/exceptions/UserNotFound';
 import { CollaboratorsService } from '../collaborators/collaborators.service';
 import { CollaboratorAlreadyExists } from 'src/utils/exceptions/CollaboratorAlreadyExists';
 import { CollaboratorException } from 'src/utils/exceptions/CollaboratorException';
@@ -11,9 +10,9 @@ import {
   SuccessAcceptedException,
   SuccessException,
   SuccessRejectedException,
-  SuccessSentException,
 } from 'src/utils/exceptions/SuccessExceptions';
 import { CollaboratorNotFoundException } from 'src/utils/exceptions/CollaboratorNotFound';
+import { UpdateCollaboratorRequestDto } from './dto/update-collaboration-requests.dto';
 
 @Injectable()
 export class CollaboratorRequestService {
@@ -28,20 +27,20 @@ export class CollaboratorRequestService {
     private readonly collaboratorService: CollaboratorsService,
   ) {}
 
-  async isPending(userOneId: number, userTwoId: number) {
+  async isPending(userId: number, postId: number, receiverId: number) {
     return await this.collaboratorRequestRepository.findOne({
-      where: [
-        {
-          sender: { id: userOneId },
-          receiver: { id: userTwoId },
-          status: 'pending',
+      where: {
+        sender: {
+          id: userId,
         },
-        {
-          sender: { id: userTwoId },
-          receiver: { id: userOneId },
-          status: 'pending',
+        receiver: {
+          id: receiverId,
         },
-      ],
+        status: 'pending',
+        post: {
+          id: postId,
+        },
+      },
     });
   }
 
@@ -50,7 +49,29 @@ export class CollaboratorRequestService {
       where: {
         id,
       },
-      relations: ['receiver', 'sender'],
+      select: {
+        id: true,
+        post: {
+          id: true,
+          title: true,
+        },
+        sender: {
+          firstName: true,
+          lastName: true,
+          email: true,
+          gender: true,
+          id: true,
+          profileImage: true,
+        },
+        receiver: {
+          firstName: true,
+          lastName: true,
+          email: true,
+          gender: true,
+          id: true,
+          profileImage: true,
+        },
+      },
     });
   }
 
@@ -78,59 +99,105 @@ export class CollaboratorRequestService {
         },
         status,
       },
-      relations: ['receiver', 'sender', 'receiver.profile', 'sender.profile'],
+      relations: ['receiver', 'sender', 'post'],
+      select: {
+        sender: {
+          id: true,
+          firstName: true,
+          lastName: true,
+          email: true,
+          gender: true,
+          profileImage: true,
+        },
+        receiver: {
+          id: true,
+          firstName: true,
+          lastName: true,
+          email: true,
+          gender: true,
+          profileImage: true,
+        },
+        post: {
+          id: true,
+          title: true,
+        },
+      },
     });
 
     return requestReceived;
   }
 
-  async create(userId: number, firstName: string) {
-    const sender = await this.userService.findOneUserById(userId);
-    const receiver = await this.userService.findOneUserByFirstName(firstName);
-    if (!receiver) throw new UserNotFoundException();
+  async create(senderId: number, receiverId: number, postId: number) {
+    const sender = await this.userService.findOneUserById(senderId);
+    const receiver = await this.userService.findOneUserById(receiverId);
 
-    const curentlyPending = await this.isPending(sender.id, receiver.id);
+    const curentlyPending = await this.isPending(
+      sender.id,
+      postId,
+      receiver.id,
+    );
 
     if (curentlyPending)
       throw new CollaboratorException('Collaborator Requesting Pending');
 
-    if (receiver.id === sender.id)
-      throw new CollaboratorException('Cannot Add Yourself');
+    if (receiverId === senderId)
+      throw new CollaboratorException('Cannot Collaborate With Yourself');
 
-    const isCollaborators =
-      await this.collaboratorService.isCurrentlyCollaborating(
-        sender.id,
-        receiver.id,
-      );
+    const areCollaborators = await this.collaboratorRepository.findOne({
+      where: [
+        {
+          sender: {
+            id: senderId,
+          },
+          receiver: {
+            id: receiverId,
+          },
+        },
+        {
+          sender: {
+            id: receiverId,
+          },
+          receiver: {
+            id: senderId,
+          },
+        },
+      ],
+    });
 
-    if (isCollaborators) throw new CollaboratorAlreadyExists();
+    if (areCollaborators) throw new CollaboratorAlreadyExists();
     const collaboratorRequest = this.collaboratorRequestRepository.create({
       sender,
       receiver,
+      post: {
+        id: postId,
+      },
       status: 'pending',
     });
 
     await this.collaboratorRequestRepository.save(collaboratorRequest);
-    throw new SuccessSentException();
   }
 
-  async accept(id: number, userId: number) {
-    const collaboratorRequest = await this.findById(id);
+  async accept(DTO: UpdateCollaboratorRequestDto, userId: number) {
+    const collaboratorRequest = await this.findById(DTO.requestId);
     if (!collaboratorRequest) throw new CollaboratorNotFoundException();
     if (collaboratorRequest.status === 'accepted')
       throw new CollaboratorException('Collaborator Request Already Accepted');
-    if (collaboratorRequest.receiver.id !== userId)
+    if (collaboratorRequest.sender?.id === userId)
       throw new CollaboratorException('You cannot accept your own request');
 
     collaboratorRequest.status = 'accepted';
-    await this.collaboratorRequestRepository.save(collaboratorRequest);
+    const acceptedRequest =
+      await this.collaboratorRequestRepository.save(collaboratorRequest);
 
-    const newFriend = this.collaboratorRepository.create({
-      sender: collaboratorRequest.sender,
+    if (!acceptedRequest || acceptedRequest.status !== 'accepted') {
+      throw new UnauthorizedException();
+    }
+
+    await this.collaboratorRepository.create({
       receiver: collaboratorRequest.receiver,
+      sender: collaboratorRequest.sender,
     });
 
-    await this.collaboratorRepository.save(newFriend);
     throw new SuccessAcceptedException();
   }
 

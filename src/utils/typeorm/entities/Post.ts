@@ -1,3 +1,4 @@
+import { UserReturns } from 'src/utils/types/types';
 import { CollaboratorRequest } from './Collaborator-Request';
 import { User } from './User';
 import {
@@ -40,5 +41,5 @@ export class Post {
   requests: CollaboratorRequest[];
 
   @ManyToOne(() => User, (user) => user.post)
-  user: User;
+  user: UserReturns;
 }

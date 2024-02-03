@@ -16,14 +16,27 @@ export class CollaboratorsService {
   async getAllCollaborators(id: number) {
     return await this.collaboratorRepository.find({
       where: [{ sender: { id } }, { receiver: { id } }],
-      relations: [
-        'sender',
-        'receiver',
-        'sender.profile',
-        'receiver.profile',
-        // 'receiver.presence',
-        // 'sender.presence',
-      ],
+      relations: ['sender', 'receiver'],
+      select: {
+        receiver: {
+          birthdayDate: true,
+          lastName: true,
+          firstName: true,
+          gender: true,
+          id: true,
+          email: true,
+          profileImage: true,
+        },
+        sender: {
+          birthdayDate: true,
+          lastName: true,
+          firstName: true,
+          gender: true,
+          id: true,
+          email: true,
+          profileImage: true,
+        },
+      },
     });
   }
 
@@ -32,14 +45,7 @@ export class CollaboratorsService {
       where: {
         id,
       },
-      relations: [
-        'sender',
-        'receiver',
-        'sender.profile',
-        // 'sender.presence',
-        'receiver.profile',
-        // 'receiver.presence',
-      ],
+      relations: ['sender', 'receiver', 'sender.profile', 'receiver.profile'],
     });
 
     if (!collaborator) throw new CollaboratorNotFoundException();
@@ -59,16 +65,16 @@ export class CollaboratorsService {
     return collaborator;
   }
 
-  async isCurrentlyCollaborating(userOneId: number, userTwoId: number) {
-    const currentlyCollaborating = await this.collaboratorRepository.findOne({
+  async isCurrentlyCollaborating(senderId: number, receiverId: number) {
+    const currentlyCollaborating = await this.collaboratorRepository.find({
       where: [
         {
-          sender: { id: userOneId },
-          receiver: { id: userTwoId },
+          sender: { id: senderId },
+          receiver: { id: receiverId },
         },
         {
-          sender: { id: userTwoId },
-          receiver: { id: userOneId },
+          sender: { id: receiverId },
+          receiver: { id: senderId },
         },
       ],
     });

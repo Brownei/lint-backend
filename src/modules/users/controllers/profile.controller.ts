@@ -1,9 +1,12 @@
 import { Controller, Post, Param, Get } from '@nestjs/common';
 import { ProfileService } from '../services/profile.service';
 import { CurrentUser } from 'src/guard/auth.guard';
+import { Routes } from 'src/utils/constants';
+import { ApiTags } from '@nestjs/swagger';
 // import { Public } from 'src/decorators/public.decorator';
 
-@Controller('profile')
+@ApiTags(Routes.PROFILE)
+@Controller(Routes.PROFILE)
 export class ProfileController {
   constructor(private readonly profileService: ProfileService) {}
 

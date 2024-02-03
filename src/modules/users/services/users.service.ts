@@ -7,6 +7,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 // import { Public } from 'src/decorators/public.decorator';
 import { UserAlreadyExistsException } from 'src/utils/exceptions/UserAlreadyExist';
 import { UserNotFoundException } from 'src/utils/exceptions/UserNotFound';
+import { UserReturns } from 'src/utils/types/types';
 
 @Injectable()
 export class UsersService {
@@ -34,14 +35,26 @@ export class UsersService {
   }
 
   //FINDING A PARTICULAR USER ACCOUNT
-  async findOneUserById(id: number) {
-    const user = await this.usersRepository.findOneBy({ id });
+  async findOneUserById(id: number): Promise<UserReturns> {
+    const user = await this.usersRepository.findOne({
+      where: {
+        id,
+      },
+      select: {
+        email: true,
+        firstName: true,
+        gender: true,
+        id: true,
+        lastName: true,
+        profileImage: true,
+      },
+    });
 
-    if (user) {
-      return user;
+    if (!user) {
+      throw new UserNotFoundException();
     }
 
-    throw new UserNotFoundException();
+    return user;
   }
 
   //FINDING A PARTICULAR USER ACCOUNT THROUGH EMAIL

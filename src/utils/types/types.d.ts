@@ -21,6 +21,32 @@ export interface UserDetails {
     profileImage: string;
 }
 
+export type UserReturns = {
+    firstName: string;
+    lastName: string;
+    email: string;
+    gender: 'Male' | 'Female';
+    profileImage: string;
+    id: number;
+}
+
+export type PostReturns = {
+    id: number,
+    title: string,
+    description: string,
+    techStacks: string,
+    problem: string,
+    solution: string,
+    requirements: string,
+    isPaid: boolean,
+    user: {
+        id: number,
+        firstName: string,
+        lastName: string,
+        profileImage: string,
+    }
+}
+
 export interface AuthenticatedSocket extends Socket {
     user?: User;
 }

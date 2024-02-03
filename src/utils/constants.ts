@@ -6,4 +6,6 @@ export enum Routes {
   COLLABORATORS_REQUESTS = 'collaborators/requests',
   MESSAGES = 'conversations/:id/messages',
   CONVERSATIONS = 'conversations',
+  PROFILE = 'profile',
+  POSTS = 'posts',
 }

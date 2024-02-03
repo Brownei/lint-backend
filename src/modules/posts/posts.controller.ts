@@ -12,10 +12,11 @@ import { CreatePostDto } from './dto/create-post.dto';
 import { UpdatePostDto } from './dto/update-post.dto';
 import { ApiTags } from '@nestjs/swagger';
 import { CurrentUser } from 'src/guard/auth.guard';
+import { Routes } from 'src/utils/constants';
 // import { CurrentUser } from 'src/guard/auth.guard';
 
-@ApiTags('posts')
-@Controller('posts')
+@ApiTags(Routes.POSTS)
+@Controller(Routes.POSTS)
 export class PostsController {
   constructor(private readonly postsService: PostsService) {}
 

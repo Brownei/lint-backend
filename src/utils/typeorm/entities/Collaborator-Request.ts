@@ -26,6 +26,7 @@ export class CollaboratorRequest {
   @ManyToOne(() => Post, (post) => post.requests, {
     onDelete: 'CASCADE',
   })
+  @JoinColumn()
   post: Post;
 
   @CreateDateColumn()

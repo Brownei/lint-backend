@@ -1,6 +1,11 @@
-import { IsNotEmpty } from 'class-validator';
+import { IsNotEmpty, IsNumber } from 'class-validator';
 
 export class CreateCollaboratorRequestDto {
   @IsNotEmpty()
-  firstName: string;
+  @IsNumber()
+  receiverId: number;
+
+  @IsNotEmpty()
+  @IsNumber()
+  postId: number;
 }

@@ -7,6 +7,7 @@ import { Repository } from 'typeorm';
 import { UsersService } from '../users/services/users.service';
 import { UserNotFoundException } from 'src/utils/exceptions/UserNotFound';
 import { PostNotFoundException } from 'src/utils/exceptions/PostNotFoundException';
+import { PostReturns } from 'src/utils/types/types';
 
 @Injectable()
 export class PostsService {
@@ -47,7 +48,7 @@ export class PostsService {
     });
   }
 
-  async findOne(id: number) {
+  async findOne(id: number): Promise<PostReturns> {
     const particularPost = await this.postRepository.findOne({
       where: {
         id,
