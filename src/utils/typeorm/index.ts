@@ -11,6 +11,7 @@ import { CollaboratorRequest } from "./entities/Collaborator-Request";
 import { User } from "./entities/User";
 import { ShakeUser } from "./entities/Shake";
 import { Session } from "./entities/Session";
+import { Links } from "./entities/Links";
 
 
 const entities = [
@@ -26,6 +27,7 @@ const entities = [
     User,
     ShakeUser,
     Session,
+    Links,
 ]
 
 export default entities;
@@ -43,4 +45,5 @@ export {
     User,
     ShakeUser,
     Session,
+    Links,
 }

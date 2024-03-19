@@ -6,13 +6,14 @@ import { CollaboratorRequestModule } from 'src/modules/collaborator-requests/col
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuthModule } from 'src/modules/auth/auth.module';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { AuthorizationGuard } from './guard/auth.guard';
+// import { AuthorizationGuard } from './guard/auth.guard';
 import { APP_GUARD } from '@nestjs/core';
 import { ConversationsModule } from 'src/modules/conversations/conversations.module';
 import { PassportModule } from '@nestjs/passport';
 import { GatewayModule } from './modules/gateway/gateway.module';
 import entities from './utils/typeorm';
 import { EventEmitterModule } from '@nestjs/event-emitter';
+import { FirebaseAuthGuard } from './guard/firebase.guard';
 
 @Module({
   imports: [
@@ -48,7 +49,7 @@ import { EventEmitterModule } from '@nestjs/event-emitter';
   providers: [
     {
       provide: APP_GUARD,
-      useClass: AuthorizationGuard,
+      useClass: FirebaseAuthGuard,
     },
   ],
 })

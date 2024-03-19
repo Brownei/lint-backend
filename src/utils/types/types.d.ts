@@ -25,7 +25,6 @@ export type UserReturns = {
     firstName: string;
     lastName: string;
     email: string;
-    gender: 'Male' | 'Female';
     profileImage: string;
     id: number;
 }
@@ -41,8 +40,7 @@ export type PostReturns = {
     isPaid: boolean,
     user: {
         id: number,
-        firstName: string,
-        lastName: string,
+        fullName: string,
         profileImage: string,
     }
 }
@@ -67,11 +65,8 @@ declare module 'express-session' {
 declare module 'express' {
     interface Request {
         user: {
-            email: number;
-            firstName: string;
-            lastName: string;
-            picture: string;
-            accessToken: string;
+            email: string;
+            id: string;
         };
     }
 }

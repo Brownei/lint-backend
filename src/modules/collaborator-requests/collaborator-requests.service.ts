@@ -56,18 +56,14 @@ export class CollaboratorRequestService {
           title: true,
         },
         sender: {
-          firstName: true,
-          lastName: true,
+          fullName: true,
           email: true,
-          gender: true,
           id: true,
           profileImage: true,
         },
         receiver: {
-          firstName: true,
-          lastName: true,
+          fullName: true,
           email: true,
-          gender: true,
           id: true,
           profileImage: true,
         },
@@ -103,18 +99,14 @@ export class CollaboratorRequestService {
       select: {
         sender: {
           id: true,
-          firstName: true,
-          lastName: true,
+          fullName: true,
           email: true,
-          gender: true,
           profileImage: true,
         },
         receiver: {
           id: true,
-          firstName: true,
-          lastName: true,
+          fullName: true,
           email: true,
-          gender: true,
           profileImage: true,
         },
         post: {
@@ -179,6 +171,8 @@ export class CollaboratorRequestService {
 
   async accept(DTO: UpdateCollaboratorRequestDto, userId: number) {
     const collaboratorRequest = await this.findById(DTO.requestId);
+    const sender = await this.userService.findOneUserById(DTO.receiverId);
+    const receiver = await this.userService.findOneUserById(userId);
     if (!collaboratorRequest) throw new CollaboratorNotFoundException();
     if (collaboratorRequest.status === 'accepted')
       throw new CollaboratorException('Collaborator Request Already Accepted');
@@ -191,14 +185,15 @@ export class CollaboratorRequestService {
 
     if (!acceptedRequest || acceptedRequest.status !== 'accepted') {
       throw new UnauthorizedException();
+    } else {
+      // console.log(sender, receiver);
+      const newCollaborators = this.collaboratorRepository.create({
+        sender,
+        receiver,
+      });
+      await this.collaboratorRepository.save(newCollaborators);
+      throw new SuccessAcceptedException();
     }
-
-    await this.collaboratorRepository.create({
-      receiver: collaboratorRequest.receiver,
-      sender: collaboratorRequest.sender,
-    });
-
-    throw new SuccessAcceptedException();
   }
 
   async reject(id: number, userId: number) {

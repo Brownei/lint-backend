@@ -7,7 +7,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 // import { Public } from 'src/decorators/public.decorator';
 import { UserAlreadyExistsException } from 'src/utils/exceptions/UserAlreadyExist';
 import { UserNotFoundException } from 'src/utils/exceptions/UserNotFound';
-import { UserReturns } from 'src/utils/types/types';
+import { userSelects } from 'src/utils/constants';
 
 @Injectable()
 export class UsersService {
@@ -17,7 +17,7 @@ export class UsersService {
   ) {}
 
   //CREATING A USER ACCOUNT
-  async createANewUser(createUserDto: CreateUserDto) {
+  async createANewUser(createUserDto: CreateUserDto): Promise<User> {
     const user = new User(createUserDto);
     const existingUser = await this.usersRepository.findOne({
       where: {
@@ -27,6 +27,8 @@ export class UsersService {
 
     if (existingUser) throw new UserAlreadyExistsException();
     await this.usersRepository.save(user);
+
+    return user;
   }
 
   //FINDING ALL USERS
@@ -35,17 +37,15 @@ export class UsersService {
   }
 
   //FINDING A PARTICULAR USER ACCOUNT
-  async findOneUserById(id: number): Promise<UserReturns> {
+  async findOneUserById(id: number) {
     const user = await this.usersRepository.findOne({
       where: {
         id,
       },
       select: {
         email: true,
-        firstName: true,
-        gender: true,
+        fullName: true,
         id: true,
-        lastName: true,
         profileImage: true,
       },
     });
@@ -58,8 +58,34 @@ export class UsersService {
   }
 
   //FINDING A PARTICULAR USER ACCOUNT THROUGH EMAIL
-  async findOneUserByEmail(email: string) {
-    const user = await this.usersRepository.findOne({ where: { email } });
+  async findOneUserByEmail(email: string, forAuth: boolean) {
+    const user = await this.usersRepository.findOne({
+      where: {
+        email,
+      },
+    });
+
+    if (user) {
+      return user;
+    }
+
+    if (forAuth === true) {
+      return null;
+    } else {
+      throw new UserNotFoundException();
+    }
+  }
+
+  //FINDING A PARTICULAR USER ACCOUNT THROUGH EMAIL
+  async findOneUserByEmailAndGetSomeData(email: string) {
+    const user = await this.usersRepository.findOne({
+      where: {
+        email,
+      },
+      // select: userSelects,
+    });
+
+    console.log(user);
 
     if (user) {
       return user;
@@ -68,8 +94,9 @@ export class UsersService {
     throw new UserNotFoundException();
   }
 
-  async findOneUserByFirstName(firstName: string) {
-    const user = await this.usersRepository.findOne({ where: { firstName } });
+  //FINDING A PARTICULAR USER ACCOUNT THROUGH FULLNAME
+  async findOneUserByFirstName(fullName: string) {
+    const user = await this.usersRepository.findOne({ where: { fullName } });
 
     if (user) {
       return user;
@@ -81,7 +108,7 @@ export class UsersService {
   //UPDATING USER ACCOUNT
   async updateUser(
     userId: number,
-    firstName: string,
+    fullName: string,
     updateUserDto: UpdateUserDto,
   ) {
     if (!updateUserDto && !userId) {
@@ -89,7 +116,7 @@ export class UsersService {
     }
     const user = await this.usersRepository.findOneBy({
       id: userId,
-      firstName: firstName,
+      fullName,
     });
     if (!user) {
       throw new UserNotFoundException();
@@ -100,15 +127,15 @@ export class UsersService {
   }
 
   //DELETING A PARTICULAR USER ACCOUNT
-  async deleteAUser(userId: number, firstName: string) {
-    if (!userId && !firstName) {
+  async deleteAUser(userId: number, fullName: string) {
+    if (!userId && !fullName) {
       throw new UnauthorizedException('No userId');
     }
 
     const user = await this.usersRepository.findOne({
       where: {
         id: userId,
-        firstName: firstName,
+        fullName,
       },
     });
     if (!user) {

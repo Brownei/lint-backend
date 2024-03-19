@@ -6,7 +6,7 @@ import {
   OnGatewayDisconnect,
   WebSocketServer,
 } from '@nestjs/websockets';
-import { Server, Socket } from 'socket.io';
+import { Server } from 'socket.io';
 import { Inject, Logger } from '@nestjs/common';
 import { GatewaySessionManager } from './gateway.session';
 import { AuthenticatedSocket } from 'src/utils/types/types';
@@ -25,6 +25,7 @@ export class MessagingGateway
   constructor(
     @Inject(GatewaySessionManager)
     private readonly sessions: GatewaySessionManager,
+    @Inject(UsersService)
     private readonly userService: UsersService,
   ) {}
 
@@ -33,30 +34,25 @@ export class MessagingGateway
 
   private logger = new Logger('ChatGateway');
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  async handleConnection(socket: Socket, @CurrentUser('id') id: number) {
+  async handleConnection(
+    socket: AuthenticatedSocket,
+    @CurrentUser('id') id: number,
+  ) {
     this.logger.log('Incoming Connection');
-    // console.log(socket.client.request);
     const currentUser = await this.userService.findOneUserById(id);
-    this.sessions.setUserSocket(currentUser.id, socket);
+    this.sessions.setUserSocket(socket.user.id, socket);
     socket.emit('connected', {});
-    this.logger.log(
-      `${currentUser.firstName} has connected with ${socket.id}.`,
-    );
+    this.logger.log(`${currentUser.fullName} has connected with ${socket.id}.`);
   }
 
   handleDisconnect(socket: AuthenticatedSocket) {
     this.logger.log('handleDisconnect');
-    this.sessions.removeUserSocket(Number(socket.id));
-    this.logger.log(`${socket.id} disconnected.`);
+    this.sessions.removeUserSocket(Number(socket.user.id));
+    this.logger.log(`${socket.user.id} disconnected.`);
   }
 
   @SubscribeMessage('onRequestSent')
-  notify(@CurrentUser('id') id: number, @MessageBody() data: any): void {
-    const currentSocket = this.sessions.getUserSocket(id);
-    if (currentSocket) {
-      this.logger.log(currentSocket);
-      this.server.emit('onRequestSent', data);
-    }
+  notify(@MessageBody() data: any): void {
+    this.server.emit('onRequestSent', data);
   }
 }

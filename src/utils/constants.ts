@@ -9,3 +9,15 @@ export enum Routes {
   PROFILE = 'profile',
   POSTS = 'posts',
 }
+
+export const userSelects = {
+  email: true,
+  fullName: true,
+  profile: {
+    username: true,
+    bio: true,
+    location: true,
+    occupation: true,
+    profileImage: true,
+  },
+}

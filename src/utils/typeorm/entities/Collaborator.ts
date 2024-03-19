@@ -14,11 +14,11 @@ export class Collaborator {
     @PrimaryGeneratedColumn()
     id: number;
 
-    @OneToOne(() => User, { createForeignKeyConstraints: false })
+    @OneToOne(() => User, { createForeignKeyConstraints: false, nullable: false })
     @JoinColumn()
     sender: User;
 
-    @OneToOne(() => User, { createForeignKeyConstraints: false })
+    @OneToOne(() => User, { createForeignKeyConstraints: false, nullable: false })
     @JoinColumn()
     receiver: User;
 

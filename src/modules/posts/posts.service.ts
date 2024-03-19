@@ -17,8 +17,9 @@ export class PostsService {
     @Inject(UsersService)
     private readonly usersService: UsersService,
   ) {}
-  async create(createPostDto: CreatePostDto, id: number) {
-    const user = await this.usersService.findOneUserById(id);
+  async create(createPostDto: CreatePostDto, email: string) {
+    const user =
+      await this.usersService.findOneUserByEmailAndGetSomeData(email);
     if (!user) throw new UserNotFoundException();
 
     const newPosts = new Post();
@@ -36,11 +37,10 @@ export class PostsService {
 
   async findAll() {
     return await this.postRepository.find({
-      relations: ['user'],
+      relations: ['profile'],
       select: {
-        user: {
-          firstName: true,
-          lastName: true,
+        profile: {
+          username: true,
           profileImage: true,
           id: true,
         },
@@ -56,8 +56,7 @@ export class PostsService {
       relations: ['user', 'requests'],
       select: {
         user: {
-          firstName: true,
-          lastName: true,
+          fullName: true,
           profileImage: true,
           id: true,
         },

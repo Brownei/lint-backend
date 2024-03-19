@@ -19,19 +19,13 @@ export class CollaboratorsService {
       relations: ['sender', 'receiver'],
       select: {
         receiver: {
-          birthdayDate: true,
-          lastName: true,
-          firstName: true,
-          gender: true,
+          fullName: true,
           id: true,
           email: true,
           profileImage: true,
         },
         sender: {
-          birthdayDate: true,
-          lastName: true,
-          firstName: true,
-          gender: true,
+          fullName: true,
           id: true,
           email: true,
           profileImage: true,

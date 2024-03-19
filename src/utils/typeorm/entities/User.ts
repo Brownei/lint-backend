@@ -2,7 +2,7 @@ import { Like } from './Like';
 import { Post } from './Post';
 import { Profile } from './Profile';
 import {
-  BeforeInsert,
+  // BeforeInsert,
   Column,
   Entity,
   OneToMany,
@@ -10,20 +10,16 @@ import {
   JoinColumn,
   PrimaryGeneratedColumn,
 } from 'typeorm';
-import * as argon2 from 'argon2';
-import { Gender } from 'src/modules/users/dto/create-user.dto';
 import { Message } from './Message';
+// import * as bcrypt from 'bcrypt';
 
 @Entity('users')
 export class User {
-  @PrimaryGeneratedColumn()
+  @PrimaryGeneratedColumn('uuid')
   id: number;
 
   @Column()
-  firstName: string;
-
-  @Column()
-  lastName: string;
+  fullName: string;
 
   @Column({
     unique: true,
@@ -31,21 +27,7 @@ export class User {
   email: string;
 
   @Column()
-  password: string;
-
-  @BeforeInsert()
-  async hashPassword() {
-    this.password = await argon2.hash(this.password);
-  }
-
-  @Column()
-  birthdayDate: Date;
-
-  @Column({
-    type: 'enum',
-    enum: Gender,
-  })
-  gender: 'Male' | 'Female';
+  emailVerified: boolean;
 
   @Column({
     default: '',
@@ -58,7 +40,7 @@ export class User {
   @OneToMany(() => Like, (like) => like.user)
   like: Like[];
 
-  @OneToOne(() => Profile, { cascade: ['insert', 'update'] })
+  @OneToOne(() => Profile, (profile) => profile.user)
   @JoinColumn()
   profile: Profile;
 

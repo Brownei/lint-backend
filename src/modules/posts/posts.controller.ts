@@ -21,8 +21,11 @@ export class PostsController {
   constructor(private readonly postsService: PostsService) {}
 
   @Post()
-  create(@Body() createPostDto: CreatePostDto, @CurrentUser('id') id: number) {
-    return this.postsService.create(createPostDto, id);
+  create(
+    @Body() createPostDto: CreatePostDto,
+    @CurrentUser('email') email: string,
+  ) {
+    return this.postsService.create(createPostDto, email);
   }
 
   @Get()

@@ -1,87 +1,67 @@
-import {
-  ConflictException,
-  HttpException,
-  HttpStatus,
-  Injectable,
-  UnauthorizedException,
-} from '@nestjs/common';
-import { ShakeUser } from 'src/utils/typeorm';
+import { Injectable } from '@nestjs/common';
+import { Profile, Links } from 'src/utils/typeorm';
 import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from 'src/utils/typeorm';
+import { CreateProfileDto } from '../dto/create-profile.dto';
+import { UserAlreadyExistsException } from 'src/utils/exceptions/UserAlreadyExist';
 
 @Injectable()
 export class ProfileService {
   constructor(
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
-    @InjectRepository(ShakeUser)
-    private readonly shakeUserRepository: Repository<ShakeUser>,
+    @InjectRepository(Profile)
+    private readonly profileRepository: Repository<Profile>,
+    @InjectRepository(Links)
+    private readonly linkRepository: Repository<Links>,
   ) {}
 
-  //SHAKING A USER
-  async shakeAndUnshakeAUser(followedfirstName: string, followerId: number) {
-    if (!followedfirstName && !followerId) {
-      throw new ConflictException('You need someone to shake');
-    }
-
-    const userFollowing = await this.userRepository.findOne({
+  async createProfile(profileDTO: CreateProfileDto) {
+    const profile = new Profile();
+    const existingProfile = await this.profileRepository.findOne({
       where: {
-        id: followerId,
-      },
-    });
-    const userFollowed = await this.userRepository.findOne({
-      where: {
-        firstName: followedfirstName,
+        username: profile.username,
       },
     });
 
-    if (!userFollowing || !userFollowed) {
-      throw new UnauthorizedException();
-    } else if (userFollowing.firstName === followedfirstName) {
-      throw new ConflictException('You cannot follow yourself');
+    if (existingProfile) throw new UserAlreadyExistsException();
+
+    for (const profileLink in profileDTO.links) {
+      const newLink = new Links();
+      newLink.link = profileLink;
+      await this.linkRepository.save(newLink);
     }
 
-    const alreadyFollowing = await this.shakeUserRepository.findOne({
-      where: {
-        userFollowed: userFollowed.id,
-        userId: userFollowing.id,
-      },
+    profile.bio = profileDTO.bio;
+    profile.location = profileDTO.location;
+    profile.occupation = profileDTO.occupation;
+    profile.profileImage = profileDTO.profileImage;
+    profile.username = profileDTO.username;
+    profile.links = profileDTO.links;
+    profile.user = profileDTO.user;
+
+    const user = await this.userRepository.findOneBy({
+      id: profileDTO.user.id,
     });
 
-    const shakeUser = new ShakeUser({
-      userFollowed: userFollowed.id,
-      userId: userFollowing.id,
-    });
+    await this.userRepository.save(user);
 
-    if (alreadyFollowing) {
-      await this.shakeUserRepository.delete({
-        userFollowed: userFollowed.id,
-        userId: userFollowing.id,
-      });
-      throw new HttpException(
-        `Hello ${userFollowing.firstName}, You have successfully unfollowed ${userFollowed.firstName} ${userFollowed.lastName}`,
-        HttpStatus.OK,
-      );
-    } else {
-      await this.shakeUserRepository.save(shakeUser);
-      throw new HttpException(
-        `Hello ${userFollowing.firstName}, You have successfully followed ${userFollowed.firstName} ${userFollowed.lastName}`,
-        HttpStatus.OK,
-      );
-    }
+    await this.profileRepository.save(profile);
+
+    return profile;
   }
 
   //GET MY PROFILE
-  async getProfile(firstName: string, userId: number) {
-    const currentProfile = await this.userRepository.findOne({
+  async getProfile(username: string, userId: number) {
+    const currentProfile = await this.profileRepository.findOne({
       where: {
-        firstName,
+        username,
       },
     });
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { id, password, ...otherDetails } = currentProfile;
+    const { id, ...otherDetails } = currentProfile;
 
     if (id !== userId) {
       return otherDetails;

@@ -63,7 +63,7 @@ export class CollaboratorRequestController {
     );
     const payload = { sender, receiver, postInterested };
     console.log(payload);
-    this.gateway.notify(id, payload);
+    this.gateway.notify(payload);
     return response;
   }
 
@@ -83,8 +83,10 @@ export class CollaboratorRequestController {
     @Body() DTO: UpdateCollaboratorRequestDto,
   ) {
     const response = await this.collaboratorRequestService.accept(DTO, userId);
-    // const payload = { sender, receiver, postInterested };
-    this.gateway.notify(userId, DTO);
+    const sender = await this.userService.findOneUserById(userId);
+    // const receiver = await this.userService.findOneUserById(DTO.requestId);
+    // const payload = { sender };
+    this.gateway.notify(sender);
     return response;
   }
 

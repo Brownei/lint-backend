@@ -1,8 +1,9 @@
-import { Controller, Post, Param, Get } from '@nestjs/common';
+import { Controller, Post, Param, Get, Body } from '@nestjs/common';
 import { ProfileService } from '../services/profile.service';
 import { CurrentUser } from 'src/guard/auth.guard';
 import { Routes } from 'src/utils/constants';
 import { ApiTags } from '@nestjs/swagger';
+import { CreateProfileDto } from '../dto/create-profile.dto';
 // import { Public } from 'src/decorators/public.decorator';
 
 @ApiTags(Routes.PROFILE)
@@ -10,19 +11,16 @@ import { ApiTags } from '@nestjs/swagger';
 export class ProfileController {
   constructor(private readonly profileService: ProfileService) {}
 
-  @Post(':firstName/shake')
-  async shakeAndUnshakeUser(
-    @CurrentUser('id') userId: number,
-    @Param('firstName') firstName: string,
-  ) {
-    return await this.profileService.shakeAndUnshakeAUser(firstName, userId);
+  @Post()
+  async createNewProfile(@Body() createProfileDto: CreateProfileDto) {
+    return await this.profileService.createProfile(createProfileDto);
   }
 
-  @Get(':firstName')
+  @Get(':userName')
   async getProfile(
     @CurrentUser('id') id: number,
-    @Param('firstName') firstName: string,
+    @Param('userName') userName: string,
   ) {
-    return await this.profileService.getProfile(firstName, id);
+    return await this.profileService.getProfile(userName, id);
   }
 }

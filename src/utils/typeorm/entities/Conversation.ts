@@ -15,11 +15,11 @@ export class Conversation {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @OneToOne(() => User, { createForeignKeyConstraints: false })
+  @OneToOne(() => User, { createForeignKeyConstraints: false, nullable: false })
   @JoinColumn()
   creator: User;
 
-  @OneToOne(() => User, { createForeignKeyConstraints: false })
+  @OneToOne(() => User, { createForeignKeyConstraints: false, nullable: false })
   @JoinColumn()
   recipient: User;
 

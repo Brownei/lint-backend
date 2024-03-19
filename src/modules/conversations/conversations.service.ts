@@ -24,7 +24,7 @@ export class ConversationsService {
     private readonly collaboratorService: CollaboratorsService,
   ) {}
 
-  async getConversations(id: number) {
+  async getConversations(email: string) {
     return await this.conversationRepository
       .createQueryBuilder('conversation')
       .leftJoinAndSelect('conversation.lastMessageSent', 'lastMessageSent')
@@ -32,17 +32,18 @@ export class ConversationsService {
       .leftJoinAndSelect('conversation.recipient', 'recipient')
       .leftJoinAndSelect('creator.profile', 'creatorProfile')
       .leftJoinAndSelect('recipient.profile', 'recipientProfile')
-      .where('creator.id = :id', { id })
-      .orWhere('recipient.id = :id', { id })
+      .where('creator.email = :email', { email })
+      .orWhere('recipient.email = :email', { email })
       .orderBy('conversation.lastMessageSentAt', 'DESC')
       .getMany();
   }
 
   async createConversation(
-    userId: number,
+    email: string,
     createConversationpayload: CreateConversationDto,
   ) {
-    const creator = await this.userService.findOneUserById(userId);
+    const creator =
+      await this.userService.findOneUserByEmailAndGetSomeData(email);
     const { firstName, message: content } = createConversationpayload;
     const recipient = await this.userService.findOneUserByFirstName(firstName);
     if (!recipient) throw new UserNotFoundException();

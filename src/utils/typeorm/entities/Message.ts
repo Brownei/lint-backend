@@ -13,7 +13,7 @@ import { MessageAttachment } from './Message-Attachment';
 
 @Entity('messages')
 export class Message {
-  @PrimaryGeneratedColumn()
+  @PrimaryGeneratedColumn('uuid')
   id: number;
 
   @Column('text', { nullable: true })

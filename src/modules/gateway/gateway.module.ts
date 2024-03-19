@@ -5,7 +5,19 @@ import { UsersModule } from '../users/users.module';
 
 @Module({
   imports: [UsersModule],
-  providers: [MessagingGateway, GatewaySessionManager],
-  exports: [MessagingGateway, GatewaySessionManager],
+  providers: [
+    MessagingGateway,
+    {
+      provide: GatewaySessionManager,
+      useClass: GatewaySessionManager,
+    },
+  ],
+  exports: [
+    MessagingGateway,
+    {
+      provide: GatewaySessionManager,
+      useClass: GatewaySessionManager,
+    },
+  ],
 })
 export class GatewayModule {}

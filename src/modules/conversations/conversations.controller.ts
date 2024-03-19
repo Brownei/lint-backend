@@ -12,18 +12,18 @@ export class ConversationsController {
 
   @Post()
   async createConversation(
-    @CurrentUser('id') id: number,
+    @CurrentUser('email') email: string,
     @Body() createConversationDto: CreateConversationDto,
   ) {
     return await this.conversationsService.createConversation(
-      id,
+      email,
       createConversationDto,
     );
   }
 
   @Get()
-  async getConversations(@CurrentUser('id') id: number) {
-    return this.conversationsService.getConversations(id);
+  async getConversations(@CurrentUser('email') email: string) {
+    return this.conversationsService.getConversations(email);
   }
 
   @Get(':id')

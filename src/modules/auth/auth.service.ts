@@ -1,88 +1,82 @@
 import {
   ConflictException,
   Injectable,
-  NotFoundException,
+  UnauthorizedException,
 } from '@nestjs/common';
-import * as argon2 from 'argon2';
 import { UsersService } from 'src/modules/users/services/users.service';
-import { JwtService } from '@nestjs/jwt';
-import { Response, Request } from 'express';
+import { DecodedIdToken } from 'firebase-admin/auth';
+import { User } from 'src/utils/typeorm';
+import { admin } from 'src/utils/firebase';
+import { UserNotFoundException } from 'src/utils/exceptions/UserNotFound';
 
 @Injectable()
 export class AuthService {
-  constructor(
-    private readonly userService: UsersService,
-    private readonly jwtService: JwtService,
-  ) {}
+  constructor(private readonly userServices: UsersService) {}
 
-  async validateUser(email: string) {
-    const user = await this.userService.findOneUserByEmail(email);
+  async verifyAndUpdateUser(accessToken: string): Promise<{
+    decodedToken: DecodedIdToken;
+    userInfo: User;
+  }> {
+    const decodedToken = await admin.auth().verifyIdToken(accessToken);
 
-    if (user) return user;
+    console.log(decodedToken);
+
+    const userInfo = await this.userServices.findOneUserByEmail(
+      decodedToken.email,
+      true,
+    );
+
+    if (userInfo) {
+      return { decodedToken, userInfo };
+    } else {
+      const newUser = await this.userServices.createANewUser({
+        email: decodedToken.email,
+        fullName: decodedToken.name,
+        profileImage: decodedToken.picture,
+        emailVerified: decodedToken.email_verified,
+      });
+
+      await admin.auth().setCustomUserClaims(decodedToken.uid, {
+        userId: newUser.id,
+      });
+
+      return { decodedToken, userInfo: newUser };
+    }
   }
 
-  async login(email: string, password: string) {
-    const user = await this.userService.findOneUserByEmail(email);
-
-    if (!user) {
-      throw new NotFoundException('User not found!');
-    }
-
-    const { password: hashedPassword, ...otherDetails } = user;
-
-    const correctPassword = await argon2.verify(hashedPassword, password);
-
-    if (!correctPassword) {
-      throw new ConflictException('Incorrect Password!');
-    }
-
-    const payload = {
-      id: otherDetails.id,
-      email: otherDetails.email,
-      sub: {
-        firstName: otherDetails.firstName,
-        lastName: otherDetails.lastName,
-        birthdayDate: otherDetails.birthdayDate,
-        gender: otherDetails.gender,
-      },
-    };
-
-    const accessToken = await this.jwtService.signAsync(payload, {
-      secret: `${process.env.JWT_SECRET}`,
+  async createSessionCookie(accessToken: string): Promise<{
+    sessionCookie: string;
+    expiresIn: number;
+  }> {
+    const expiresIn = 60 * 60 * 24 * 5 * 1000;
+    const sessionCookie = await admin.auth().createSessionCookie(accessToken, {
+      expiresIn,
     });
 
-    return accessToken;
+    return { sessionCookie, expiresIn };
   }
 
-  async googleLogin(req: any, res: Response) {
-    if (!req.user) {
-      return 'No user avialable';
+  async getUserInfo(email: string): Promise<User> {
+    const userInfo =
+      await this.userServices.findOneUserByEmailAndGetSomeData(email);
+
+    if (!userInfo) throw new UserNotFoundException();
+
+    return userInfo;
+  }
+
+  async revokeToken(sessionCookie: string): Promise<void> {
+    try {
+      const decodedToken = await admin
+        .auth()
+        .verifySessionCookie(sessionCookie, true);
+      await admin.auth().revokeRefreshTokens(decodedToken.sub);
+    } catch (error) {
+      if (error instanceof Error) {
+        throw new UnauthorizedException();
+      }
+
+      throw new ConflictException();
     }
-
-    // const currentUser = await this.userService.findOneUserByEmail(
-    //   req.user.email,
-    // );
-
-    res.cookie('session', req.user.accessToken);
-
-    res.send(req.user.email);
-  }
-
-  async logout(req: Request, res: Response) {
-    const token = req.cookies('session');
-    res.send(token);
-  }
-
-  async faceBookLogin(req: any, res: Response) {
-    if (!req.user) {
-      res.send('No user avialable');
-    }
-
-    res.send(req.user);
-  }
-
-  async findUser(email: string) {
-    const user = await this.userService.findOneUserByEmail(email);
-    return user;
   }
 }

@@ -1,5 +1,5 @@
-import { UserReturns } from 'src/utils/types/types';
 import { CollaboratorRequest } from './Collaborator-Request';
+import { Profile } from './Profile';
 import { User } from './User';
 import {
   Column,
@@ -12,7 +12,7 @@ import {
 
 @Entity('posts')
 export class Post {
-  @PrimaryGeneratedColumn()
+  @PrimaryGeneratedColumn('uuid')
   id: number;
 
   @Column()
@@ -40,6 +40,9 @@ export class Post {
   @JoinColumn()
   requests: CollaboratorRequest[];
 
+  @ManyToOne(() => Profile, (profile) => profile.post)
+  profile: Profile;
+
   @ManyToOne(() => User, (user) => user.post)
-  user: UserReturns;
+  user: User;
 }
