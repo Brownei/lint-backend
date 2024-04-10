@@ -1,71 +1,73 @@
-import { Injectable } from '@nestjs/common';
-import { Profile, Links } from 'src/utils/typeorm';
-import { Repository } from 'typeorm';
-import { InjectRepository } from '@nestjs/typeorm';
-import { User } from 'src/utils/typeorm';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { CreateProfileDto } from '../dto/create-profile.dto';
 import { UserAlreadyExistsException } from 'src/utils/exceptions/UserAlreadyExist';
+import { prisma } from 'src/utils/prisma';
+import { UserNotFoundException } from 'src/utils/exceptions/UserNotFound';
 
 @Injectable()
 export class ProfileService {
-  constructor(
-    @InjectRepository(User)
-    private readonly userRepository: Repository<User>,
-    @InjectRepository(Profile)
-    private readonly profileRepository: Repository<Profile>,
-    @InjectRepository(Links)
-    private readonly linkRepository: Repository<Links>,
-  ) {}
+  constructor() {}
 
-  async createProfile(profileDTO: CreateProfileDto) {
-    const profile = new Profile();
-    const existingProfile = await this.profileRepository.findOne({
+  async createProfile(profileDTO: CreateProfileDto, userId: number) {
+    const existingProfile = await prisma.profile.findUnique({
       where: {
-        username: profile.username,
+        username: profileDTO.username,
       },
     });
 
-    if (existingProfile) throw new UserAlreadyExistsException();
-
-    for (const profileLink in profileDTO.links) {
-      const newLink = new Links();
-      newLink.link = profileLink;
-      await this.linkRepository.save(newLink);
-    }
-
-    profile.bio = profileDTO.bio;
-    profile.location = profileDTO.location;
-    profile.occupation = profileDTO.occupation;
-    profile.profileImage = profileDTO.profileImage;
-    profile.username = profileDTO.username;
-    profile.links = profileDTO.links;
-    profile.user = profileDTO.user;
-
-    const user = await this.userRepository.findOneBy({
-      id: profileDTO.user.id,
+    const currentUser = await prisma.user.findUnique({
+      where: {
+        id: userId,
+      },
     });
 
-    await this.userRepository.save(user);
-
-    await this.profileRepository.save(profile);
-
-    return profile;
+    if (existingProfile) {
+      throw new UserAlreadyExistsException();
+    } else if (!currentUser) {
+      throw new UnauthorizedException();
+    } else {
+      await prisma.profile.create({
+        data: {
+          ...profileDTO,
+          links: profileDTO.links.map((li) => li),
+          userId,
+        },
+      });
+    }
   }
 
   //GET MY PROFILE
-  async getProfile(username: string, userId: number) {
-    const currentProfile = await this.profileRepository.findOne({
+  async getProfile(username: string, currentUserId: number) {
+    const currentProfile = await prisma.profile.findUnique({
       where: {
         username,
       },
     });
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { id, ...otherDetails } = currentProfile;
+    const { userId, ...otherDetails } = currentProfile;
 
-    if (id !== userId) {
+    if (currentProfile.id !== currentUserId) {
       return otherDetails;
     }
+
+    return currentProfile;
+  }
+
+  async getProfileThroughUserEmail(email: string) {
+    const currentUser = await prisma.user.findUnique({
+      where: {
+        email,
+      },
+    });
+
+    if (!currentUser) throw new UserNotFoundException();
+
+    const currentProfile = await prisma.profile.findUnique({
+      where: {
+        userId: currentUser.id,
+      },
+    });
 
     return currentProfile;
   }

@@ -1,44 +1,52 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  HttpException,
+  HttpStatus,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { CreateUserDto } from '../dto/create-user.dto';
 import { UpdateUserDto } from '../dto/update-user.dto';
-import { User } from 'src/utils/typeorm';
-import { Repository } from 'typeorm';
-import { InjectRepository } from '@nestjs/typeorm';
 // import { Public } from 'src/decorators/public.decorator';
 import { UserAlreadyExistsException } from 'src/utils/exceptions/UserAlreadyExist';
 import { UserNotFoundException } from 'src/utils/exceptions/UserNotFound';
-import { userSelects } from 'src/utils/constants';
+import { User } from '@prisma/client';
+import { prisma } from 'src/utils/prisma';
 
 @Injectable()
 export class UsersService {
-  constructor(
-    @InjectRepository(User)
-    private readonly usersRepository: Repository<User>,
-  ) {}
+  constructor() {}
 
   //CREATING A USER ACCOUNT
   async createANewUser(createUserDto: CreateUserDto): Promise<User> {
-    const user = new User(createUserDto);
-    const existingUser = await this.usersRepository.findOne({
+    const existingUser = await prisma.user.findUnique({
       where: {
-        email: user.email,
+        email: createUserDto.email,
       },
     });
 
     if (existingUser) throw new UserAlreadyExistsException();
-    await this.usersRepository.save(user);
 
-    return user;
+    const newUser = await prisma.user.create({
+      data: {
+        email: createUserDto.email,
+        fullName: createUserDto.fullName,
+        emailVerified: false,
+        profileImage: createUserDto.profileImage,
+        password: createUserDto.password,
+      },
+    });
+
+    return newUser;
   }
 
   //FINDING ALL USERS
   async findAllUsers(): Promise<User[]> {
-    return await this.usersRepository.find();
+    return await prisma.user.findMany();
   }
 
   //FINDING A PARTICULAR USER ACCOUNT
   async findOneUserById(id: number) {
-    const user = await this.usersRepository.findOne({
+    const user = await prisma.user.findUnique({
       where: {
         id,
       },
@@ -59,14 +67,17 @@ export class UsersService {
 
   //FINDING A PARTICULAR USER ACCOUNT THROUGH EMAIL
   async findOneUserByEmail(email: string, forAuth: boolean) {
-    const user = await this.usersRepository.findOne({
+    const user = await prisma.user.findUnique({
       where: {
         email,
       },
     });
 
-    if (user) {
-      return user;
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { password, ...otherDetails } = user;
+
+    if (user && forAuth === false) {
+      return otherDetails;
     }
 
     if (forAuth === true) {
@@ -78,11 +89,16 @@ export class UsersService {
 
   //FINDING A PARTICULAR USER ACCOUNT THROUGH EMAIL
   async findOneUserByEmailAndGetSomeData(email: string) {
-    const user = await this.usersRepository.findOne({
+    const user = await prisma.user.findUnique({
       where: {
         email,
       },
-      // select: userSelects,
+      select: {
+        email: true,
+        fullName: true,
+        profile: true,
+        id: true,
+      },
     });
 
     console.log(user);
@@ -95,8 +111,16 @@ export class UsersService {
   }
 
   //FINDING A PARTICULAR USER ACCOUNT THROUGH FULLNAME
-  async findOneUserByFirstName(fullName: string) {
-    const user = await this.usersRepository.findOne({ where: { fullName } });
+  async findOneUserByFullName(fullName: string) {
+    const user = await prisma.user.findFirst({
+      where: { fullName },
+      select: {
+        email: true,
+        fullName: true,
+        id: true,
+        profileImage: true,
+      },
+    });
 
     if (user) {
       return user;
@@ -114,15 +138,25 @@ export class UsersService {
     if (!updateUserDto && !userId) {
       throw new UnauthorizedException();
     }
-    const user = await this.usersRepository.findOneBy({
-      id: userId,
-      fullName,
+    const user = await prisma.user.findFirst({
+      where: {
+        id: userId,
+        fullName,
+      },
     });
     if (!user) {
       throw new UserNotFoundException();
     } else {
-      const updated = Object.assign(user, updateUserDto);
-      await this.usersRepository.save(updated);
+      await prisma.user.update({
+        where: {
+          id: userId,
+        },
+        data: {
+          ...updateUserDto,
+        },
+      });
+
+      return new HttpException('Deleted', HttpStatus.ACCEPTED);
     }
   }
 
@@ -132,7 +166,7 @@ export class UsersService {
       throw new UnauthorizedException('No userId');
     }
 
-    const user = await this.usersRepository.findOne({
+    const user = await prisma.user.findFirst({
       where: {
         id: userId,
         fullName,
@@ -141,7 +175,13 @@ export class UsersService {
     if (!user) {
       throw new UnauthorizedException();
     } else {
-      await this.usersRepository.remove(user);
+      await prisma.user.delete({
+        where: {
+          id: user.id,
+        },
+      });
+
+      return new HttpException('Deleted', HttpStatus.ACCEPTED);
     }
   }
 }

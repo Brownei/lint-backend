@@ -15,9 +15,7 @@ import { CurrentUser } from 'src/guard/auth.guard';
 import { Routes } from 'src/utils/constants';
 // import { CreateCollaboratorRequestDto } from './dto/create-collaborator-request.dto';
 import { EventEmitter2 } from '@nestjs/event-emitter';
-import { MessagingGateway } from '../gateway/gateway';
 import { CreateCollaboratorRequestDto } from './dto/create-collaborator-request.dto';
-import { SubscribeMessage } from '@nestjs/websockets';
 import { UsersService } from '../users/services/users.service';
 import { PostsService } from '../posts/posts.service';
 import { UpdateCollaboratorRequestDto } from './dto/update-collaboration-requests.dto';
@@ -28,7 +26,6 @@ export class CollaboratorRequestController {
   constructor(
     private readonly collaboratorRequestService: CollaboratorRequestService,
     private event: EventEmitter2,
-    private gateway: MessagingGateway,
     private readonly userService: UsersService,
     private readonly postService: PostsService,
   ) {}
@@ -40,7 +37,6 @@ export class CollaboratorRequestController {
     );
   }
 
-  @SubscribeMessage('allRequestsReceived')
   @Get('received')
   async getCollaboratorRequestsReceived(@CurrentUser('id') id: number) {
     return await this.collaboratorRequestService.getCollaboratorRequestsReceived(
@@ -63,7 +59,6 @@ export class CollaboratorRequestController {
     );
     const payload = { sender, receiver, postInterested };
     console.log(payload);
-    this.gateway.notify(payload);
     return response;
   }
 
@@ -83,10 +78,9 @@ export class CollaboratorRequestController {
     @Body() DTO: UpdateCollaboratorRequestDto,
   ) {
     const response = await this.collaboratorRequestService.accept(DTO, userId);
-    const sender = await this.userService.findOneUserById(userId);
+    // const sender = await this.userService.findOneUserById(userId);
     // const receiver = await this.userService.findOneUserById(DTO.requestId);
     // const payload = { sender };
-    this.gateway.notify(sender);
     return response;
   }
 

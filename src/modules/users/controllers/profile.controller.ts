@@ -12,8 +12,11 @@ export class ProfileController {
   constructor(private readonly profileService: ProfileService) {}
 
   @Post()
-  async createNewProfile(@Body() createProfileDto: CreateProfileDto) {
-    return await this.profileService.createProfile(createProfileDto);
+  async createNewProfile(
+    @CurrentUser('id') userId: number,
+    @Body() createProfileDto: CreateProfileDto,
+  ) {
+    return await this.profileService.createProfile(createProfileDto, userId);
   }
 
   @Get(':userName')

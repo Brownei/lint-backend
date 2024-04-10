@@ -1,9 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { User } from '@prisma/client';
 import { IsNotEmpty } from 'class-validator';
-import { Links, User } from 'src/utils/typeorm';
-// export type Links = {
-//   link: string;
-// };
 
 export class CreateProfileDto {
   @ApiProperty({
@@ -35,7 +32,7 @@ export class CreateProfileDto {
     isArray: true,
   })
   @IsNotEmpty()
-  links: Links[];
+  links: string[];
 
   @ApiProperty({
     type: String,
@@ -45,9 +42,6 @@ export class CreateProfileDto {
   @IsNotEmpty()
   profileImage: string;
 
-  @ApiProperty({
-    type: User,
-  })
   @IsNotEmpty()
   user: User;
 }

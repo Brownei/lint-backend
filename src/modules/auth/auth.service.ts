@@ -5,9 +5,9 @@ import {
 } from '@nestjs/common';
 import { UsersService } from 'src/modules/users/services/users.service';
 import { DecodedIdToken } from 'firebase-admin/auth';
-import { User } from 'src/utils/typeorm';
 import { admin } from 'src/utils/firebase';
 import { UserNotFoundException } from 'src/utils/exceptions/UserNotFound';
+import { UserReturns } from 'src/utils/types/types';
 
 @Injectable()
 export class AuthService {
@@ -15,7 +15,7 @@ export class AuthService {
 
   async verifyAndUpdateUser(accessToken: string): Promise<{
     decodedToken: DecodedIdToken;
-    userInfo: User;
+    userInfo: UserReturns;
   }> {
     const decodedToken = await admin.auth().verifyIdToken(accessToken);
 
@@ -34,6 +34,7 @@ export class AuthService {
         fullName: decodedToken.name,
         profileImage: decodedToken.picture,
         emailVerified: decodedToken.email_verified,
+        password: null,
       });
 
       await admin.auth().setCustomUserClaims(decodedToken.uid, {
@@ -56,7 +57,7 @@ export class AuthService {
     return { sessionCookie, expiresIn };
   }
 
-  async getUserInfo(email: string): Promise<User> {
+  async getUserInfo(email: string) {
     const userInfo =
       await this.userServices.findOneUserByEmailAndGetSomeData(email);
 

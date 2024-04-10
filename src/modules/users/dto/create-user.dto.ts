@@ -10,6 +10,13 @@ export class CreateUserDto {
 
   @ApiProperty({
     type: String,
+    nullable: true,
+  })
+  @IsEmpty()
+  password: string;
+
+  @ApiProperty({
+    type: String,
     uniqueItems: true,
   })
   @IsNotEmpty()

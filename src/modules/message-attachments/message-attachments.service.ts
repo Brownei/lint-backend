@@ -1,27 +1,30 @@
 import { Injectable } from '@nestjs/common';
-import { Repository } from 'typeorm';
-import { MessageAttachment } from 'src/utils/typeorm';
-import { InjectRepository } from '@nestjs/typeorm';
+import { prisma } from 'src/utils/prisma';
+import { MessageAttachement } from '@prisma/client';
 
 @Injectable()
 export class MessageAttachmentsService {
-  constructor(
-    @InjectRepository(MessageAttachment)
-    private readonly attachmentRepository: Repository<MessageAttachment>,
-  ) {}
+  constructor() {}
 
-  create(attachments: string[]) {
+  create(attachments: string[], messageId: number) {
     const promise = attachments.map(async (attachment) => {
-      const newAttachment = this.attachmentRepository.create();
-      newAttachment.attachments = attachment;
-      return await this.attachmentRepository.save(newAttachment);
+      prisma.messageAttachement.create({
+        data: {
+          attachments: attachment,
+          messageId,
+        },
+      });
     });
     return Promise.all(promise);
   }
 
-  deleteAllAttachments(attachments: MessageAttachment[]) {
+  deleteAllAttachments(attachments: MessageAttachement[]) {
     const promise = attachments.map((attachment) =>
-      this.attachmentRepository.delete(attachment.id),
+      prisma.messageAttachement.delete({
+        where: {
+          id: attachment.id,
+        },
+      }),
     );
     return Promise.all(promise);
   }

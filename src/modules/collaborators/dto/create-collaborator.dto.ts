@@ -1,5 +1,5 @@
+import { User } from '@prisma/client';
 import { IsNotEmpty } from 'class-validator';
-import { User } from 'src/utils/typeorm';
 
 export class CreateCollaboratorDto {
   @IsNotEmpty()

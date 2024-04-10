@@ -8,7 +8,7 @@ export class CreatePostDto {
   description: string;
 
   @IsString()
-  problem_to_solve: string;
+  problem: string;
 
   @IsString()
   solution: string;
@@ -17,7 +17,7 @@ export class CreatePostDto {
   requirements: string;
 
   @IsString()
-  tech_stacks: string;
+  techStacks: string;
 
   IsPaid: boolean;
 }

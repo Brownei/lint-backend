@@ -50,12 +50,12 @@ export class AuthController {
       const { sessionCookie, expiresIn } =
         await this.authService.createSessionCookie(accessToken);
 
-      res.cookie('session', sessionCookie, {
-        maxAge: expiresIn,
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
-      });
+        res.cookie('session', sessionCookie, {
+          maxAge: expiresIn,
+          httpOnly: true,
+          secure: process.env.NODE_ENV === 'production',
+          sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+        });
 
       const payload = {
         userInfo,

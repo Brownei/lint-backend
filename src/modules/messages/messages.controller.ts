@@ -37,12 +37,7 @@ export class MessagesController {
       createMessageDto,
       userId,
     );
-    this.eventEmitter.emit(
-      'message.create',
-      response.message,
-      response.conversation,
-    );
-    return;
+    return response;
   }
 
   @Get()

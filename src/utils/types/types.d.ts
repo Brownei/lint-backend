@@ -16,15 +16,13 @@ export interface UserDetails {
     firstName: string;
     lastName: string;
     email: string;
-    birthdayDate: Date;
-    gender: string;
     profileImage: string;
 }
 
 export type UserReturns = {
-    firstName: string;
-    lastName: string;
+    fullName: string;
     email: string;
+    emailVerified: boolean;
     profileImage: string;
     id: number;
 }

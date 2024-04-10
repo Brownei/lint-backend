@@ -1,19 +1,9 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Body,
-  Patch,
-  Param,
-  Delete,
-} from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Delete } from '@nestjs/common';
 import { PostsService } from './posts.service';
 import { CreatePostDto } from './dto/create-post.dto';
-import { UpdatePostDto } from './dto/update-post.dto';
 import { ApiTags } from '@nestjs/swagger';
 import { CurrentUser } from 'src/guard/auth.guard';
 import { Routes } from 'src/utils/constants';
-// import { CurrentUser } from 'src/guard/auth.guard';
 
 @ApiTags(Routes.POSTS)
 @Controller(Routes.POSTS)
@@ -36,11 +26,6 @@ export class PostsController {
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.postsService.findOne(+id);
-  }
-
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updatePostDto: UpdatePostDto) {
-    return this.postsService.update(+id, updatePostDto);
   }
 
   @Delete(':id')

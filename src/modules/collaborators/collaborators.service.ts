@@ -1,45 +1,71 @@
-import { Collaborator } from 'src/utils/typeorm';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { Injectable } from '@nestjs/common';
+import {
+  ConflictException,
+  HttpException,
+  HttpStatus,
+  Injectable,
+} from '@nestjs/common';
 import { CollaboratorNotFoundException } from 'src/utils/exceptions/CollaboratorNotFound';
 import { NotCollaboratingException } from 'src/utils/exceptions/NotCollaborating';
 import { DeleteCollaboratorException } from 'src/utils/exceptions/DeleteCollaborator';
+import { prisma } from 'src/utils/prisma';
 
 @Injectable()
 export class CollaboratorsService {
-  constructor(
-    @InjectRepository(Collaborator)
-    private readonly collaboratorRepository: Repository<Collaborator>,
-  ) {}
+  constructor() {}
+
+  async createCollaborators(senderId: number, receiverId: number) {
+    const activelyCollaborating = this.isCurrentlyCollaborating(
+      senderId,
+      receiverId,
+    );
+
+    if (activelyCollaborating)
+      throw new ConflictException('You guys are currently collaborating');
+
+    await prisma.collaborators.create({
+      data: {
+        receiverId,
+        senderId,
+      },
+    });
+
+    return new HttpException('Created', HttpStatus.CREATED);
+  }
 
   async getAllCollaborators(id: number) {
-    return await this.collaboratorRepository.find({
-      where: [{ sender: { id } }, { receiver: { id } }],
-      relations: ['sender', 'receiver'],
+    return await prisma.collaborators.findMany({
+      where: {
+        OR: [
+          {
+            receiverId: id,
+          },
+          {
+            senderId: id,
+          },
+        ],
+      },
       select: {
         receiver: {
-          fullName: true,
-          id: true,
-          email: true,
-          profileImage: true,
+          select: {
+            username: true,
+            profileImage: true,
+          },
         },
         sender: {
-          fullName: true,
-          id: true,
-          email: true,
-          profileImage: true,
+          select: {
+            username: true,
+            profileImage: true,
+          },
         },
       },
     });
   }
 
   async findCollaboratorById(id: number) {
-    const collaborator = await this.collaboratorRepository.findOne({
+    const collaborator = await prisma.collaborators.findUnique({
       where: {
         id,
       },
-      relations: ['sender', 'receiver', 'sender.profile', 'receiver.profile'],
     });
 
     if (!collaborator) throw new CollaboratorNotFoundException();
@@ -50,27 +76,32 @@ export class CollaboratorsService {
   async deleteCollaborator(id: number, userId: number) {
     const collaborator = await this.findCollaboratorById(id);
     if (!collaborator) throw new CollaboratorNotFoundException();
-    if (
-      collaborator.receiver.id !== userId ||
-      collaborator.sender.id !== userId
-    )
+    if (collaborator.receiverId !== userId || collaborator.senderId !== userId)
       throw new DeleteCollaboratorException();
-    await this.collaboratorRepository.delete(id);
-    return collaborator;
+
+    await prisma.collaborators.delete({
+      where: {
+        id,
+      },
+    });
+
+    return new HttpException('Deleted', HttpStatus.OK);
   }
 
   async isCurrentlyCollaborating(senderId: number, receiverId: number) {
-    const currentlyCollaborating = await this.collaboratorRepository.find({
-      where: [
-        {
-          sender: { id: senderId },
-          receiver: { id: receiverId },
-        },
-        {
-          sender: { id: receiverId },
-          receiver: { id: senderId },
-        },
-      ],
+    const currentlyCollaborating = await prisma.collaborators.findFirst({
+      where: {
+        OR: [
+          {
+            senderId,
+            receiverId,
+          },
+          {
+            senderId: receiverId,
+            receiverId: senderId,
+          },
+        ],
+      },
     });
 
     if (!currentlyCollaborating) throw new NotCollaboratingException();
