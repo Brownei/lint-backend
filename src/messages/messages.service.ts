@@ -3,10 +3,10 @@ import { CreateMessageDto } from './dto/create-message.dto';
 import { ConversationsService } from '../conversations/conversations.service';
 import { MessageAttachmentsService } from '../message-attachments/message-attachments.service';
 import { CollaboratorsService } from '../collaborators/collaborators.service';
-import { ConversationNotFoundException } from 'src/utils/exceptions/ConversationNotFoundException';
-import { CollaboratorNotFoundException } from 'src/utils/exceptions/CollaboratorNotFound';
+import { ConversationNotFoundException } from 'src/conversations/exceptions/ConversationNotFoundException';
+import { CollaboratorNotFoundException } from 'src/collaborators/exceptions/CollaboratorNotFound';
 import { UsersService } from '../users/services/users.service';
-import { MessageException } from 'src/utils/exceptions/MessageException';
+import { MessageException } from './exceptions/MessageException';
 import { prisma } from 'src/prisma.module';
 import { Conversation, Message } from '@prisma/client';
 

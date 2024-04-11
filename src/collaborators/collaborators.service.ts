@@ -4,9 +4,9 @@ import {
   HttpStatus,
   Injectable,
 } from '@nestjs/common';
-import { CollaboratorNotFoundException } from 'src/utils/exceptions/CollaboratorNotFound';
-import { NotCollaboratingException } from 'src/utils/exceptions/NotCollaborating';
-import { DeleteCollaboratorException } from 'src/utils/exceptions/DeleteCollaborator';
+import { CollaboratorNotFoundException } from './exceptions/CollaboratorNotFound';
+import { NotCollaboratingException } from './exceptions/NotCollaborating';
+import { DeleteCollaboratorException } from './exceptions/DeleteCollaborator';
 import { prisma } from 'src/prisma.module';
 
 @Injectable()

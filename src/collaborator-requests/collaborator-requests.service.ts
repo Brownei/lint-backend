@@ -1,14 +1,14 @@
 import { Inject, Injectable, UnauthorizedException } from '@nestjs/common';
 import { UsersService } from '../users/services/users.service';
 import { CollaboratorsService } from '../collaborators/collaborators.service';
-import { CollaboratorAlreadyExists } from 'src/utils/exceptions/CollaboratorAlreadyExists';
-import { CollaboratorException } from 'src/utils/exceptions/CollaboratorException';
+import { CollaboratorAlreadyExists } from 'src/collaborators/exceptions/CollaboratorAlreadyExists';
+import { CollaboratorException } from 'src/collaborators/exceptions/CollaboratorException';
 import {
   SuccessAcceptedException,
   SuccessException,
   SuccessRejectedException,
-} from 'src/utils/exceptions/SuccessExceptions';
-import { CollaboratorNotFoundException } from 'src/utils/exceptions/CollaboratorNotFound';
+} from 'src/exceptions/SuccessExceptions';
+import { CollaboratorNotFoundException } from 'src/collaborators/exceptions/CollaboratorNotFound';
 import { UpdateCollaboratorRequestDto } from './dto/update-collaboration-requests.dto';
 import { prisma } from 'src/prisma.module';
 

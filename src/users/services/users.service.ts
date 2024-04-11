@@ -7,8 +7,8 @@ import {
 import { CreateUserDto } from '../dto/create-user.dto';
 import { UpdateUserDto } from '../dto/update-user.dto';
 // import { Public } from 'src/decorators/public.decorator';
-import { UserAlreadyExistsException } from 'src/utils/exceptions/UserAlreadyExist';
-import { UserNotFoundException } from 'src/utils/exceptions/UserNotFound';
+import { UserAlreadyExistsException } from '../exceptions/UserAlreadyExist';
+import { UserNotFoundException } from '../exceptions/UserNotFound';
 import { User } from '@prisma/client';
 import { prisma } from 'src/prisma.module';
 

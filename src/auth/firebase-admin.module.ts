@@ -1,5 +1,7 @@
-// import { config } from 'dotenv';
+import { config } from 'dotenv';
 import * as admin from 'firebase-admin';
+
+config();
 
 admin.initializeApp({
   credential: admin.credential.cert({

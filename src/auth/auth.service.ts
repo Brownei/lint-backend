@@ -5,7 +5,7 @@ import {
 } from '@nestjs/common';
 import { DecodedIdToken } from 'firebase-admin/auth';
 import { admin } from './firebase-admin.module';
-import { UserNotFoundException } from '../utils/exceptions/UserNotFound';
+import { UserNotFoundException } from '../users/exceptions/UserNotFound';
 import { UserReturns } from '../utils/types/types';
 import { UsersService } from 'src/users/services/users.service';
 
