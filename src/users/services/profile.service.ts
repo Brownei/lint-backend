@@ -1,7 +1,7 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { CreateProfileDto } from '../dto/create-profile.dto';
 import { UserAlreadyExistsException } from '../exceptions/UserAlreadyExist';
-import { prisma } from 'src/prisma.module';
+import { prisma } from '../../prisma.module';
 import { UserNotFoundException } from '../exceptions/UserNotFound';
 
 @Injectable()

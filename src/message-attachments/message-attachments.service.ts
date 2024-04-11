@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { prisma } from 'src/prisma.module';
+import { prisma } from '../prisma.module';
 import { MessageAttachement } from '@prisma/client';
 
 @Injectable()

@@ -10,7 +10,7 @@ import {
 } from 'src/exceptions/SuccessExceptions';
 import { CollaboratorNotFoundException } from 'src/collaborators/exceptions/CollaboratorNotFound';
 import { UpdateCollaboratorRequestDto } from './dto/update-collaboration-requests.dto';
-import { prisma } from 'src/prisma.module';
+import { prisma } from '../prisma.module';
 
 @Injectable()
 export class CollaboratorRequestService {

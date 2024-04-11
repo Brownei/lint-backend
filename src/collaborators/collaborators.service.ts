@@ -7,7 +7,7 @@ import {
 import { CollaboratorNotFoundException } from './exceptions/CollaboratorNotFound';
 import { NotCollaboratingException } from './exceptions/NotCollaborating';
 import { DeleteCollaboratorException } from './exceptions/DeleteCollaborator';
-import { prisma } from 'src/prisma.module';
+import { prisma } from '../prisma.module';
 
 @Injectable()
 export class CollaboratorsService {
