@@ -1,6 +1,6 @@
 import { Controller, Post, Param, Get, Body } from '@nestjs/common';
 import { ProfileService } from '../services/profile.service';
-import { CurrentUser } from 'src/guard/auth.guard';
+import { CurrentUser } from 'src/auth/guard/auth.guard';
 import { Routes } from 'src/utils/constants';
 import { ApiTags } from '@nestjs/swagger';
 import { CreateProfileDto } from '../dto/create-profile.dto';

@@ -11,7 +11,7 @@ import {
 } from '@nestjs/common';
 import { CollaboratorRequestService } from './collaborator-requests.service';
 import { ApiTags } from '@nestjs/swagger';
-import { CurrentUser } from 'src/guard/auth.guard';
+import { CurrentUser } from 'src/auth/guard/auth.guard';
 import { Routes } from 'src/utils/constants';
 // import { CreateCollaboratorRequestDto } from './dto/create-collaborator-request.dto';
 import { EventEmitter2 } from '@nestjs/event-emitter';
