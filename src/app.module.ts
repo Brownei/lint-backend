@@ -10,6 +10,8 @@ import { ConversationsModule } from './conversations/conversations.module';
 import { LikesModule } from './likes/likes.module';
 import { PostsModule } from './posts/posts.module';
 import { UsersModule } from './users/users.module';
+import { AppController } from './app.controller';
+import { AppService } from './app.service';
 
 @Module({
   imports: [
@@ -24,11 +26,13 @@ import { UsersModule } from './users/users.module';
     AuthModule,
     ConversationsModule,
   ],
+  controllers: [AppController],
   providers: [
     {
       provide: APP_GUARD,
       useClass: FirebaseAuthGuard,
     },
+    AppService,
   ],
 })
 export class AppModule {

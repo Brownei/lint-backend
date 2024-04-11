@@ -36,7 +36,6 @@ async function server() {
   app.use(cookieParser());
 
   app.useGlobalPipes(new ValidationPipe());
-  app.setGlobalPrefix('api');
 
   await app.listen(port);
   Logger.log(
