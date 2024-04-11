@@ -4,9 +4,9 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { DecodedIdToken } from 'firebase-admin/auth';
-import { admin } from 'src/auth/firebase-admin.module';
-import { UserNotFoundException } from 'src/utils/exceptions/UserNotFound';
-import { UserReturns } from 'src/utils/types/types';
+import { admin } from './firebase-admin.module';
+import { UserNotFoundException } from '../utils/exceptions/UserNotFound';
+import { UserReturns } from '../utils/types/types';
 import { UsersService } from 'src/users/services/users.service';
 
 @Injectable()
