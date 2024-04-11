@@ -12,7 +12,7 @@ import { JwtService } from '@nestjs/jwt';
 import { Request } from 'express';
 import { IS_PUBLIC_KEY } from '../decorators/public.decorator';
 // import * as jwt from 'jsonwebtoken';
-import { admin } from 'src/utils/firebase-admin.module';
+import { admin } from 'src/firebase-admin.module';
 
 @Injectable()
 export class AuthorizationGuard implements CanActivate {

@@ -7,7 +7,7 @@ import { UserNotFoundException } from 'src/utils/exceptions/UserNotFound';
 import { CreateConversationException } from 'src/utils/exceptions/CreateConversationException';
 import { CollaboratorNotFoundException } from 'src/utils/exceptions/CollaboratorNotFound';
 import { ConversationExistsException } from 'src/utils/exceptions/ConversationExistsException';
-import { prisma } from 'src/utils/prisma.module';
+import { prisma } from 'src/prisma.module';
 import { ProfileService } from '../users/services/profile.service';
 import { Message } from '@prisma/client';
 

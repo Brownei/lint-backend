@@ -10,7 +10,7 @@ import { UpdateUserDto } from '../dto/update-user.dto';
 import { UserAlreadyExistsException } from 'src/utils/exceptions/UserAlreadyExist';
 import { UserNotFoundException } from 'src/utils/exceptions/UserNotFound';
 import { User } from '@prisma/client';
-import { prisma } from 'src/utils/prisma.module';
+import { prisma } from 'src/prisma.module';
 
 @Injectable()
 export class UsersService {
