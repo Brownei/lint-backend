@@ -5,7 +5,7 @@ import {
   Logger,
 } from '@nestjs/common';
 import { type Request } from 'express';
-import { admin } from 'src/auth/firebase-admin.module';
+import { admin } from '../firebase-admin.module';
 import { Reflector } from '@nestjs/core';
 import { IS_PUBLIC_KEY } from 'src/decorators/public.decorator';
 
