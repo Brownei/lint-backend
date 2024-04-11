@@ -19,9 +19,9 @@ import {
 import { UsersService } from '../services/users.service';
 import { CreateUserDto } from '../dto/create-user.dto';
 import { UpdateUserDto } from '../dto/update-user.dto';
-import { Public } from '../../../decorators/public.decorator';
 import { CurrentUser } from 'src/guard/auth.guard';
 import { Routes } from 'src/utils/constants';
+import { Public } from 'src/decorators/public.decorator';
 
 @ApiTags('users')
 @Controller(Routes.USERS)

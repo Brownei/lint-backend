@@ -1,15 +1,15 @@
 import { Module } from '@nestjs/common';
-import { UsersModule } from 'src/modules/users/users.module';
-import { PostsModule } from 'src/modules/posts/posts.module';
-import { LikesModule } from 'src/modules/likes/likes.module';
-import { CollaboratorRequestModule } from 'src/modules/collaborator-requests/collaborator-requests.module';
-import { AuthModule } from 'src/modules/auth/auth.module';
 import { ConfigModule } from '@nestjs/config';
 // import { AuthorizationGuard } from './guard/auth.guard';
 import { APP_GUARD } from '@nestjs/core';
-import { ConversationsModule } from 'src/modules/conversations/conversations.module';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { FirebaseAuthGuard } from './guard/firebase.guard';
+import { AuthModule } from './auth/auth.module';
+import { CollaboratorRequestModule } from './collaborator-requests/collaborator-requests.module';
+import { ConversationsModule } from './conversations/conversations.module';
+import { LikesModule } from './likes/likes.module';
+import { PostsModule } from './posts/posts.module';
+import { UsersModule } from './users/users.module';
 
 @Module({
   imports: [

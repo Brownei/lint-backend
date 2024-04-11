@@ -12,12 +12,12 @@ import {
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { ApiTags } from '@nestjs/swagger';
-import { Public } from '../../decorators/public.decorator';
 import { Response, Request } from 'express';
 import { Routes } from 'src/utils/constants';
 import { UsersService } from '../users/services/users.service';
 import { ReqWithUser } from 'src/guard/firebase.guard';
 import { config } from 'dotenv';
+import { Public } from 'src/decorators/public.decorator';
 // import { User } from 'src/utils/typeorm';
 
 config();
