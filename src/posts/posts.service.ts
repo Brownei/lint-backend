@@ -8,7 +8,7 @@ import {
 import { CreatePostDto } from './dto/create-post.dto';
 import { UsersService } from '../users/services/users.service';
 import { PostNotFoundException } from 'src/utils/exceptions/PostNotFoundException';
-import { prisma } from 'src/utils/prisma';
+import { prisma } from 'src/utils/prisma.module';
 import { ProfileService } from '../users/services/profile.service';
 import { Post } from '@prisma/client';
 

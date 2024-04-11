@@ -7,7 +7,7 @@ import { ConversationNotFoundException } from 'src/utils/exceptions/Conversation
 import { CollaboratorNotFoundException } from 'src/utils/exceptions/CollaboratorNotFound';
 import { UsersService } from '../users/services/users.service';
 import { MessageException } from 'src/utils/exceptions/MessageException';
-import { prisma } from 'src/utils/prisma';
+import { prisma } from 'src/utils/prisma.module';
 import { Conversation, Message } from '@prisma/client';
 
 @Injectable()
