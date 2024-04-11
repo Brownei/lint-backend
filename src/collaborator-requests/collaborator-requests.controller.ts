@@ -12,7 +12,6 @@ import {
 import { CollaboratorRequestService } from './collaborator-requests.service';
 import { ApiTags } from '@nestjs/swagger';
 import { CurrentUser } from 'src/auth/guard/auth.guard';
-import { Routes } from 'src/utils/constants';
 // import { CreateCollaboratorRequestDto } from './dto/create-collaborator-request.dto';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { CreateCollaboratorRequestDto } from './dto/create-collaborator-request.dto';
@@ -20,8 +19,8 @@ import { UsersService } from '../users/services/users.service';
 import { PostsService } from '../posts/posts.service';
 import { UpdateCollaboratorRequestDto } from './dto/update-collaboration-requests.dto';
 
-@ApiTags(Routes.COLLABORATORS_REQUESTS)
-@Controller(Routes.COLLABORATORS_REQUESTS)
+@ApiTags('collaborators/requests')
+@Controller('collaborators/requests')
 export class CollaboratorRequestController {
   constructor(
     private readonly collaboratorRequestService: CollaboratorRequestService,

@@ -13,12 +13,11 @@ import { CreateMessageDto } from './dto/create-message.dto';
 import { CurrentUser } from 'src/auth/guard/auth.guard';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { EmptyMessageException } from './exceptions/EmptyMessageException';
-import { Routes } from 'src/utils/constants';
 import { EditMessageDto } from './dto/edit-message.dto';
 import { ApiTags } from '@nestjs/swagger';
 
-@ApiTags(Routes.MESSAGES)
-@Controller(Routes.MESSAGES)
+@ApiTags('conversations/:id/messages')
+@Controller('conversations/:id/messages')
 export class MessagesController {
   constructor(
     private readonly messagesService: MessagesService,

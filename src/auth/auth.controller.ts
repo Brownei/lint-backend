@@ -13,7 +13,6 @@ import {
 import { AuthService } from './auth.service';
 import { ApiTags } from '@nestjs/swagger';
 import { Response, Request } from 'express';
-import { Routes } from 'src/utils/constants';
 import { UsersService } from '../users/services/users.service';
 import { ReqWithUser } from 'src/auth/guard/firebase.guard';
 import { config } from 'dotenv';
@@ -23,7 +22,7 @@ import { Public } from 'src/decorators/public.decorator';
 config();
 
 @ApiTags('auth')
-@Controller(Routes.AUTH)
+@Controller('auth')
 export class AuthController {
   private readonly logger = new Logger(AuthController.name);
   constructor(
