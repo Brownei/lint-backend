@@ -7,7 +7,7 @@ import { DecodedIdToken } from 'firebase-admin/auth';
 import { admin } from './firebase-admin.module';
 import { UserNotFoundException } from '../users/exceptions/UserNotFound';
 import { UserReturns } from '../utils/types/types';
-import { UsersService } from 'src/users/services/users.service';
+import { UsersService } from '../users/services/users.service';
 
 @Injectable()
 export class AuthService {

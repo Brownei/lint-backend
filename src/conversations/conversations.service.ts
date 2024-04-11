@@ -3,7 +3,7 @@ import { CreateConversationDto } from './dto/create-conversation.dto';
 import { UsersService } from '../users/services/users.service';
 import { CollaboratorsService } from '../collaborators/collaborators.service';
 import { ConversationNotFoundException } from './exceptions/ConversationNotFoundException';
-import { UserNotFoundException } from 'src/users/exceptions/UserNotFound';
+import { UserNotFoundException } from '../users/exceptions/UserNotFound';
 import { CreateConversationException } from './exceptions/CreateConversationException';
 import { CollaboratorNotFoundException } from 'src/collaborators/exceptions/CollaboratorNotFound';
 import { ConversationExistsException } from './exceptions/ConversationExistsException';

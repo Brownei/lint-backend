@@ -7,7 +7,6 @@ import { FirebaseAuthGuard } from './auth/guard/firebase.guard';
 import { AuthModule } from './auth/auth.module';
 import { CollaboratorRequestModule } from './collaborator-requests/collaborator-requests.module';
 import { ConversationsModule } from './conversations/conversations.module';
-import { LikesModule } from './likes/likes.module';
 import { PostsModule } from './posts/posts.module';
 import { UsersModule } from './users/users.module';
 import { AppController } from './app.controller';
@@ -21,7 +20,6 @@ import { AppService } from './app.service';
     EventEmitterModule.forRoot(),
     UsersModule,
     PostsModule,
-    LikesModule,
     CollaboratorRequestModule,
     AuthModule,
     ConversationsModule,

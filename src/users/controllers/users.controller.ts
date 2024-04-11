@@ -20,7 +20,7 @@ import { UsersService } from '../services/users.service';
 import { CreateUserDto } from '../dto/create-user.dto';
 import { UpdateUserDto } from '../dto/update-user.dto';
 import { CurrentUser } from '../../auth/guard/auth.guard';
-import { Public } from 'src/decorators/public.decorator';
+import { Public } from '../../decorators/public.decorator';
 
 @ApiTags('users')
 @Controller('users')
