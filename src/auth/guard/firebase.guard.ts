@@ -7,7 +7,7 @@ import {
 import { type Request } from 'express';
 import { admin } from '../firebase-admin.module';
 import { Reflector } from '@nestjs/core';
-import { IS_PUBLIC_KEY } from 'src/decorators/public.decorator';
+import { IS_PUBLIC_KEY } from '../../decorators/public.decorator';
 
 export type ReqWithUser = Request & {
   user: {
