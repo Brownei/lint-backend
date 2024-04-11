@@ -2,7 +2,7 @@ import { Controller, Get, Post, Body, Param, Delete } from '@nestjs/common';
 import { PostsService } from './posts.service';
 import { CreatePostDto } from './dto/create-post.dto';
 import { ApiTags } from '@nestjs/swagger';
-import { CurrentUser } from 'src/auth/guard/auth.guard';
+import { CurrentUser } from '../auth/guard/auth.guard';
 
 @ApiTags('posts')
 @Controller('posts')

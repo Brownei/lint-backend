@@ -10,7 +10,7 @@ import {
 } from '@nestjs/common';
 import { MessagesService } from './messages.service';
 import { CreateMessageDto } from './dto/create-message.dto';
-import { CurrentUser } from 'src/auth/guard/auth.guard';
+import { CurrentUser } from '../auth/guard/auth.guard';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { EmptyMessageException } from './exceptions/EmptyMessageException';
 import { EditMessageDto } from './dto/edit-message.dto';
