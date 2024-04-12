@@ -11,41 +11,45 @@ import {
 import { MessagesService } from './messages.service';
 import { CreateMessageDto } from './dto/create-message.dto';
 import { CurrentUser } from '../auth/guard/auth.guard';
-import { EventEmitter2 } from '@nestjs/event-emitter';
 import { EmptyMessageException } from './exceptions/EmptyMessageException';
 import { EditMessageDto } from './dto/edit-message.dto';
 import { ApiTags } from '@nestjs/swagger';
+import { pusher } from '../pusher.module';
 
 @ApiTags('conversations/:id/messages')
 @Controller('conversations/:id/messages')
 export class MessagesController {
-  constructor(
-    private readonly messagesService: MessagesService,
-    private eventEmitter: EventEmitter2,
-  ) {}
+  constructor(private readonly messagesService: MessagesService) {}
 
   @Post()
   async createMessage(
     @CurrentUser('id') userId: number,
-    @Param('id', ParseIntPipe) id: number,
+    @Param('id', ParseIntPipe) conversationId: number,
     @Body() createMessageDto: CreateMessageDto,
   ) {
     const { content, attachments } = createMessageDto;
     if (!attachments || !content) throw new EmptyMessageException();
-    const response = await this.messagesService.createMessage(
+
+    pusher.trigger(
+      String(conversationId),
+      'incoming-message',
+      createMessageDto,
+    );
+
+    await this.messagesService.createMessage(
       createMessageDto,
       userId,
+      conversationId,
     );
-    return response;
   }
 
   @Get()
   async getMessagesFromConversation(
     @CurrentUser('id') userId: number,
-    @Param('id', ParseIntPipe) id: number,
+    @Param('id', ParseIntPipe) conversationId: number,
   ) {
-    const messages = await this.messagesService.getMessages(id);
-    return { id, messages };
+    const messages = await this.messagesService.getMessages(conversationId);
+    return { conversationId, messages };
   }
 
   @Delete(':messageId')
@@ -54,11 +58,11 @@ export class MessagesController {
     @Param('id', ParseIntPipe) conversationId: number,
     @Param('messageId', ParseIntPipe) messageId: number,
   ) {
-    const params = { userId, conversationId, messageId };
+    // const params = { userId, conversationId, messageId };
     await this.messagesService.deleteMessage(userId, conversationId, messageId);
-    this.eventEmitter.emit('message.delete', params);
     return { conversationId, messageId };
   }
+
   // api/conversations/:conversationId/messages/:messageId
   @Patch(':messageId')
   async editMessage(
@@ -73,7 +77,6 @@ export class MessagesController {
       userId,
       content,
     );
-    this.eventEmitter.emit('message.update', message);
     return message;
   }
 }

@@ -9,6 +9,7 @@ import { UsersService } from '../users/services/users.service';
 import { MessageException } from './exceptions/MessageException';
 import { prisma } from '../prisma.module';
 import { Conversation, Message } from '@prisma/client';
+import { SuccessSentException } from '../exceptions/SuccessExceptions';
 
 @Injectable()
 export class MessagesService {
@@ -23,10 +24,13 @@ export class MessagesService {
     private readonly collaboratorsService: CollaboratorsService,
   ) {}
 
-  async createMessage(createMessageDto: CreateMessageDto, userId: number) {
-    const conversation = await this.conversationService.findById(
-      createMessageDto.conservationId,
-    );
+  async createMessage(
+    createMessageDto: CreateMessageDto,
+    userId: number,
+    conversationId: number,
+  ) {
+    const conversation =
+      await this.conversationService.findById(conversationId);
 
     const user = await this.usersService.findOneUserById(userId);
 
@@ -43,7 +47,7 @@ export class MessagesService {
     if (creatorId !== userId && recipientId !== userId)
       throw new MessageException('Cannot Create Message');
 
-    const message = await prisma.message.create({
+    await prisma.message.create({
       data: {
         content: createMessageDto.content,
         attachments: {
@@ -54,11 +58,11 @@ export class MessagesService {
           },
         },
         creatorId: user.id,
-        conversationId: createMessageDto.conservationId,
+        conversationId,
       },
     });
 
-    return message;
+    return new SuccessSentException();
   }
 
   async getMessages(conversationId: number) {
