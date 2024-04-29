@@ -11,13 +11,16 @@ import { UserAlreadyExistsException } from '../exceptions/UserAlreadyExist';
 import { UserNotFoundException } from '../exceptions/UserNotFound';
 import { User } from '@prisma/client';
 import { prisma } from '../../prisma.module';
+import * as bcrypt from 'bcrypt';
+// import { UserReturns } from 'src/utils/types/types';
 
 @Injectable()
 export class UsersService {
   constructor() {}
 
   //CREATING A USER ACCOUNT
-  async createANewUser(createUserDto: CreateUserDto): Promise<User> {
+  async createANewUser(createUserDto: CreateUserDto) {
+    const hashedPassword = await bcrypt.hash(createUserDto.password, 10);
     const existingUser = await prisma.user.findUnique({
       where: {
         email: createUserDto.email,
@@ -30,9 +33,17 @@ export class UsersService {
       data: {
         email: createUserDto.email,
         fullName: createUserDto.fullName,
-        emailVerified: false,
+        emailVerified: createUserDto.emailVerified,
         profileImage: createUserDto.profileImage,
-        password: createUserDto.password,
+        password: hashedPassword,
+      },
+      select: {
+        email: true,
+        emailVerified: true,
+        fullName: true,
+        id: true,
+        profile: true,
+        profileImage: true,
       },
     });
 
@@ -43,6 +54,29 @@ export class UsersService {
   async findAllUsers(): Promise<User[]> {
     return await prisma.user.findMany();
   }
+
+
+  // FIND ALL USERS BY USERNAME
+  async findOneUserByUserName(username: string) {
+	  const user = await prisma.profile.findUnique({
+		where: {
+			username
+		},
+		select: {
+			username: true,
+			profileImage: true,
+			post: true,
+			id: true
+		}
+	  })
+
+	  if(!user) {
+		  throw new UnauthorizedException();
+	  }
+
+	  return user;
+	}
+
 
   //FINDING A PARTICULAR USER ACCOUNT
   async findOneUserById(id: number) {
@@ -66,25 +100,21 @@ export class UsersService {
   }
 
   //FINDING A PARTICULAR USER ACCOUNT THROUGH EMAIL
-  async findOneUserByEmail(email: string, forAuth: boolean) {
+  async findOneUserByEmail(email: string) {
     const user = await prisma.user.findUnique({
       where: {
         email,
       },
     });
 
+    if (!user) {
+      throw new UserNotFoundException();
+    }
+
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { password, ...otherDetails } = user;
 
-    if (user && forAuth === false) {
-      return otherDetails;
-    }
-
-    if (forAuth === true) {
-      return null;
-    } else {
-      throw new UserNotFoundException();
-    }
+    return otherDetails;
   }
 
   //FINDING A PARTICULAR USER ACCOUNT THROUGH EMAIL
@@ -98,10 +128,10 @@ export class UsersService {
         fullName: true,
         profile: true,
         id: true,
+        emailVerified: true,
+        profileImage: true,
       },
     });
-
-    console.log(user);
 
     if (user) {
       return user;

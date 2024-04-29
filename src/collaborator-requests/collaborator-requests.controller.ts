@@ -6,13 +6,12 @@ import {
   Patch,
   Param,
   Delete,
-  ParseIntPipe,
   Put,
+  ParseUUIDPipe,
 } from '@nestjs/common';
 import { CollaboratorRequestService } from './collaborator-requests.service';
 import { ApiTags } from '@nestjs/swagger';
 import { CurrentUser } from '../auth/guard/auth.guard';
-// import { CreateCollaboratorRequestDto } from './dto/create-collaborator-request.dto';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { CreateCollaboratorRequestDto } from './dto/create-collaborator-request.dto';
 import { UsersService } from '../users/services/users.service';
@@ -24,37 +23,38 @@ import { UpdateCollaboratorRequestDto } from './dto/update-collaboration-request
 export class CollaboratorRequestController {
   constructor(
     private readonly collaboratorRequestService: CollaboratorRequestService,
-    private event: EventEmitter2,
     private readonly userService: UsersService,
     private readonly postService: PostsService,
   ) {}
 
   @Get('sent')
-  async getCollaboratorRequestsSent(@CurrentUser('id') id: number) {
+  async getCollaboratorRequestsSent(@CurrentUser('email') email: string) {
     return await this.collaboratorRequestService.getCollaboratorRequestsSent(
-      id,
+      email,
     );
   }
 
   @Get('received')
-  async getCollaboratorRequestsReceived(@CurrentUser('id') id: number) {
+  async getCollaboratorRequestsReceived(@CurrentUser('email') email: string) {
     return await this.collaboratorRequestService.getCollaboratorRequestsReceived(
-      id,
+      email,
     );
   }
 
   @Post()
   async createCollaboratorRequest(
-    @CurrentUser('id', ParseIntPipe) id: number,
+    @CurrentUser('email') email: string,
     @Body() DTO: CreateCollaboratorRequestDto,
   ) {
-    const sender = await this.userService.findOneUserById(id);
+    const sender = await this.userService.findOneUserByEmail(email);
     const receiver = await this.userService.findOneUserById(DTO.receiverId);
-    const postInterested = await this.postService.findOne(DTO.postId);
+    console.log(sender.id)
+	const postInterested = await this.postService.findOne(DTO.postId);
     const response = await this.collaboratorRequestService.create(
-      id,
+      sender.id,
       DTO.receiverId,
       DTO.postId,
+	  DTO.content
     );
     const payload = { sender, receiver, postInterested };
     console.log(payload);
@@ -64,7 +64,7 @@ export class CollaboratorRequestController {
   @Delete(':id/cancel')
   async cancelFriendRequest(
     @CurrentUser('id') userId: number,
-    @Param('id', ParseIntPipe) id: number,
+    @Param('id', ParseUUIDPipe) id: string,
   ) {
     console.log(userId);
     const response = await this.collaboratorRequestService.cancel(id, userId);
@@ -86,7 +86,7 @@ export class CollaboratorRequestController {
   @Patch(':id/reject')
   async rejectFriendRequest(
     @CurrentUser('id') userId: number,
-    @Param('id', ParseIntPipe) id: number,
+    @Param('id', ParseUUIDPipe) id: string,
   ) {
     const response = await this.collaboratorRequestService.reject(id, userId);
     return response;

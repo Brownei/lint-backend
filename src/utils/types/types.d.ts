@@ -2,6 +2,7 @@
 import { Request } from '@nestjs/common';
 import { User } from '../typeorm';
 import { Socket } from 'socket.io';
+import { Profile } from '@prisma/client';
 
 export interface HTTPRequest extends Request {
     user: UserDetails;
@@ -20,11 +21,12 @@ export interface UserDetails {
 }
 
 export type UserReturns = {
+    id: number;
     fullName: string;
     email: string;
     emailVerified: boolean;
     profileImage: string;
-    id: number;
+    profile: Profile;
 }
 
 export type PostReturns = {

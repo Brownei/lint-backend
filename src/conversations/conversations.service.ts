@@ -72,11 +72,13 @@ export class ConversationsService {
     return newConversation;
   }
 
-  async findById(id: number) {
+  async findById(id: string) {
     return await prisma.conversation.findUnique({
       where: { id },
       include: {
         messages: true,
+        creator: true,
+        recipient: true,
       },
     });
   }
@@ -98,7 +100,7 @@ export class ConversationsService {
     });
   }
 
-  async getMessages(id: number, limit: number) {
+  async getMessages(id: string, limit: number) {
     return await prisma.conversation.findFirst({
       where: {
         id,
@@ -113,7 +115,7 @@ export class ConversationsService {
     });
   }
 
-  async update(id: number, lastMessageSent: Message, userId: number) {
+  async update(id: string, lastMessageSent: Message, userId: number) {
     return await prisma.conversation.update({
       where: {
         id,
@@ -129,7 +131,7 @@ export class ConversationsService {
     });
   }
 
-  async hasAccess(id: number, userId: number) {
+  async hasAccess(id: string, userId: number) {
     const conversation = await this.findById(id);
     if (!conversation) throw new ConversationNotFoundException();
     return (

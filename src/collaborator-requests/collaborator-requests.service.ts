@@ -1,4 +1,4 @@
-import { Inject, Injectable, UnauthorizedException } from '@nestjs/common';
+import { ConflictException, Inject, Injectable, UnauthorizedException } from '@nestjs/common';
 import { UsersService } from '../users/services/users.service';
 import { CollaboratorsService } from '../collaborators/collaborators.service';
 import { CollaboratorAlreadyExists } from '../collaborators/exceptions/CollaboratorAlreadyExists';
@@ -21,7 +21,7 @@ export class CollaboratorRequestService {
     private readonly collaboratorService: CollaboratorsService,
   ) {}
 
-  async isPending(userId: number, postId: number, receiverId: number) {
+  async isPending(userId: number, postId: string, receiverId: number) {
     return await prisma.collaboratorRequest.findFirst({
       where: {
         postId,
@@ -32,7 +32,7 @@ export class CollaboratorRequestService {
     });
   }
 
-  async findById(id: number) {
+  async findById(id: string) {
     return await prisma.collaboratorRequest.findFirst({
       where: {
         id,
@@ -40,34 +40,24 @@ export class CollaboratorRequestService {
       select: {
         id: true,
         status: true,
-        post: {
-          select: {
-            id: true,
-            title: true,
-          },
-        },
-        receiver: {
-          select: {
-            username: true,
-            id: true,
-          },
-        },
-        sender: {
-          select: {
-            id: true,
-            username: true,
-          },
-        },
+        post: true,
+        receiver: true,
+        sender: true,
       },
     });
   }
 
-  async getCollaboratorRequestsSent(id: number) {
+  async getCollaboratorRequestsSent(email: string) {
     const status = 'pending';
+	const user = await prisma.user.findUnique({
+		where: {
+			email
+		}
+	})
     const requestSent = await prisma.collaboratorRequest.findMany({
       where: {
         sender: {
-          id,
+          userId: user.id,
         },
         status,
       },
@@ -76,84 +66,96 @@ export class CollaboratorRequestService {
     return requestSent;
   }
 
-  async getCollaboratorRequestsReceived(id: number) {
+  async getCollaboratorRequestsReceived(email: string) {
     const status = 'pending';
+	const user = await prisma.user.findUnique({
+		where: {
+			email
+		}
+	})
     const requestReceived = await prisma.collaboratorRequest.findMany({
       where: {
         receiver: {
-          id,
+          userId: user.id,
         },
         status,
       },
       select: {
         post: {
-          select: {
-            id: true,
-            title: true,
-          },
-        },
-        receiver: {
-          select: {
-            username: true,
-            id: true,
-          },
-        },
+			select: {
+				id: true,
+				title: true,
+				createdAt: true
+			}
+			
+		},
         sender: {
-          select: {
-            id: true,
-            username: true,
-          },
-        },
+			select: {
+				occupation: true,
+				fullName: true,
+				username: true,
+				profileImage: true
+			}
+		},
+		content: true,
+		id: true,
+		createdAt: true
       },
     });
 
     return requestReceived;
   }
 
-  async create(senderId: number, receiverId: number, postId: number) {
-    const sender = await this.userService.findOneUserById(senderId);
-    const receiver = await this.userService.findOneUserById(receiverId);
+  async create(senderId: number, receiverId: number, postId: string, content: string) {
+	try {
+		const sender = await this.userService.findOneUserById(senderId);
+		const receiver = await this.userService.findOneUserById(receiverId);
 
-    const curentlyPending = await this.isPending(
-      sender.id,
-      postId,
-      receiver.id,
-    );
+		const curentlyPending = await this.isPending(
+			sender.id,
+			postId,
+			receiver.id,
+		);
 
-    if (curentlyPending)
-      throw new CollaboratorException('Collaborator Requesting Pending');
+		if (curentlyPending)
+			throw new CollaboratorException('Collaborator Requesting Pending');
 
-    if (receiverId === senderId)
-      throw new CollaboratorException('Cannot Collaborate With Yourself');
+		if (receiverId === senderId)
+			throw new CollaboratorException('Cannot Collaborate With Yourself');
 
-    if (!sender || !receiver) throw new UnauthorizedException();
+		if (!sender || !receiver) throw new UnauthorizedException();
 
-    const areCollaborators = await prisma.collaboratorRequest.findFirst({
-      where: {
-        OR: [
-          {
-            senderId,
-            receiverId,
-          },
-          {
-            senderId: receiverId,
-            receiverId: senderId,
-          },
-        ],
-      },
-    });
+		const areCollaborators = await prisma.collaboratorRequest.findFirst({
+			where: {
+				OR: [
+					{
+						senderId,
+						receiverId,
+					},
+					{
+						senderId: receiverId,
+						receiverId: senderId,
+					},
+				],
+			},
+		});
 
-    if (areCollaborators) throw new CollaboratorAlreadyExists();
-    const collaboratorRequest = await prisma.collaboratorRequest.create({
-      data: {
-        senderId,
-        receiverId,
-        postId,
-        status: 'pending',
-      },
-    });
+		if (areCollaborators) throw new CollaboratorAlreadyExists();
+		const collaboratorRequest = await prisma.collaboratorRequest.create({
+			data: {
+				senderId,
+				receiverId,
+				postId,
+				content: content,
+				status: 'pending',
+			},
+		});
 
-    return collaboratorRequest;
+		return collaboratorRequest;
+	} catch (error) {
+		console.log(error)
+		throw new ConflictException();
+	}
   }
 
   async accept(DTO: UpdateCollaboratorRequestDto, userId: number) {
@@ -190,7 +192,7 @@ export class CollaboratorRequestService {
     }
   }
 
-  async reject(id: number, userId: number) {
+  async reject(id: string, userId: number) {
     const collaboratorRequest = await this.findById(id);
     if (!collaboratorRequest) throw new CollaboratorNotFoundException();
     if (collaboratorRequest.status === 'accepted')
@@ -210,7 +212,7 @@ export class CollaboratorRequestService {
     throw new SuccessRejectedException();
   }
 
-  async cancel(id: number, userId: number) {
+  async cancel(id: string, userId: number) {
     const collaboratorRequest = await this.findById(id);
     if (!collaboratorRequest) throw new CollaboratorNotFoundException();
     if (collaboratorRequest.sender.id !== userId)

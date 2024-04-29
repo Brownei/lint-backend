@@ -26,7 +26,7 @@ export class ConversationsController {
   }
 
   @Get(':id')
-  async getConversationById(@Param('id') id: number) {
+  async getConversationById(@Param('id') id: string) {
     return this.conversationsService.findById(id);
   }
 }

@@ -8,7 +8,7 @@ import { UserNotFoundException } from '../exceptions/UserNotFound';
 export class ProfileService {
   constructor() {}
 
-  async createProfile(profileDTO: CreateProfileDto, userId: number) {
+  async createProfile(profileDTO: CreateProfileDto, email: string) {
     const existingProfile = await prisma.profile.findUnique({
       where: {
         username: profileDTO.username,
@@ -17,7 +17,7 @@ export class ProfileService {
 
     const currentUser = await prisma.user.findUnique({
       where: {
-        id: userId,
+        email,
       },
     });
 
@@ -30,10 +30,28 @@ export class ProfileService {
         data: {
           ...profileDTO,
           links: profileDTO.links.map((li) => li),
-          userId,
+          userId: currentUser.id,
         },
       });
     }
+  }
+
+  //GET PROFILE THROUGH ID
+  async getProfileThroughId(id: number, currentUserId: number) {
+    const currentProfile = await prisma.profile.findUnique({
+      where: {
+        id,
+      },
+    });
+
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { userId, ...otherDetails } = currentProfile;
+
+    if (currentProfile.id !== currentUserId) {
+      return otherDetails;
+    }
+
+    return currentProfile;
   }
 
   //GET MY PROFILE

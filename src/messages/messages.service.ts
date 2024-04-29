@@ -27,7 +27,7 @@ export class MessagesService {
   async createMessage(
     createMessageDto: CreateMessageDto,
     userId: number,
-    conversationId: number,
+    conversationId: string,
   ) {
     const conversation =
       await this.conversationService.findById(conversationId);
@@ -65,7 +65,7 @@ export class MessagesService {
     return new SuccessSentException();
   }
 
-  async getMessages(conversationId: number) {
+  async getMessages(conversationId: string) {
     return await prisma.message.findMany({
       where: {
         conversation: {
@@ -80,8 +80,8 @@ export class MessagesService {
 
   async deleteMessage(
     userId: number,
-    conversationId: number,
-    messageId: number,
+    conversationId: string,
+    messageId: string,
   ) {
     const conversation = await this.conversationService.getMessages(
       conversationId,
@@ -151,8 +151,8 @@ export class MessagesService {
   }
 
   async editMessage(
-    conversationId: number,
-    messageId: number,
+    conversationId: string,
+    messageId: string,
     userId: number,
     content: string,
   ) {

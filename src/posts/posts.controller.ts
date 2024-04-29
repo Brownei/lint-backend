@@ -1,4 +1,12 @@
-import { Controller, Get, Post, Body, Param, Delete } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Param,
+  Delete,
+  ParseUUIDPipe,
+} from '@nestjs/common';
 import { PostsService } from './posts.service';
 import { CreatePostDto } from './dto/create-post.dto';
 import { ApiTags } from '@nestjs/swagger';
@@ -10,25 +18,30 @@ export class PostsController {
   constructor(private readonly postsService: PostsService) {}
 
   @Post()
-  create(
+  async create(
     @Body() createPostDto: CreatePostDto,
     @CurrentUser('email') email: string,
   ) {
-    return this.postsService.create(createPostDto, email);
+    return await this.postsService.create(createPostDto, email);
   }
 
   @Get()
-  findAll() {
-    return this.postsService.findAll();
+  async findAll() {
+    return await this.postsService.findAll();
   }
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.postsService.findOne(+id);
+  @Get('/username/:username')
+  async findAllPostConcerningAUser(@Param('username') username: string) {
+    return await this.postsService.findAllPostConcerningAUser(username);
   }
 
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.postsService.remove(+id);
+  @Get('/:id')
+  async findOne(@Param('id', ParseUUIDPipe) id: string) {
+    return await this.postsService.findOne(id);
+  }
+
+  @Delete('/:id')
+  async remove(@Param('id', ParseUUIDPipe) id: string) {
+    return  this.postsService.remove(+id);
   }
 }

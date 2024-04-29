@@ -6,7 +6,7 @@ import { MessageAttachement } from '@prisma/client';
 export class MessageAttachmentsService {
   constructor() {}
 
-  create(attachments: string[], messageId: number) {
+  create(attachments: string[], messageId: string) {
     const promise = attachments.map(async (attachment) => {
       prisma.messageAttachement.create({
         data: {

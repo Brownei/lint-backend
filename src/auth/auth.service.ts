@@ -8,6 +8,7 @@ import { admin } from './firebase-admin.module';
 import { UserNotFoundException } from '../users/exceptions/UserNotFound';
 import { UserReturns } from '../utils/types/types';
 import { UsersService } from '../users/services/users.service';
+import { prisma } from '../prisma.module';
 
 @Injectable()
 export class AuthService {
@@ -21,28 +22,66 @@ export class AuthService {
 
     console.log(decodedToken);
 
-    const userInfo = await this.userServices.findOneUserByEmail(
-      decodedToken.email,
-      true,
-    );
+    const userInfo = await prisma.user.findUnique({
+      where: {
+        email: decodedToken.email,
+      },
+      select: {
+        email: true,
+        emailVerified: true,
+        fullName: true,
+        id: true,
+        profile: true,
+        profileImage: true,
+      },
+    });
+
+    if (!userInfo) {
+      throw new UserNotFoundException();
+    }
+
+    return { decodedToken, userInfo };
+  }
+
+  async verifyAndCreateUser(accessToken: string): Promise<{
+    decodedToken: DecodedIdToken;
+    userInfo: UserReturns;
+  }> {
+    const decodedToken = await admin.auth().verifyIdToken(accessToken);
+
+    console.log(decodedToken);
+
+    const userInfo = await prisma.user.findUnique({
+      where: {
+        email: decodedToken.email,
+      },
+      select: {
+        email: true,
+        emailVerified: true,
+        fullName: true,
+        id: true,
+        profile: true,
+        profileImage: true,
+      },
+    });
 
     if (userInfo) {
       return { decodedToken, userInfo };
-    } else {
-      const newUser = await this.userServices.createANewUser({
-        email: decodedToken.email,
-        fullName: decodedToken.name,
-        profileImage: decodedToken.picture,
-        emailVerified: decodedToken.email_verified,
-        password: null,
-      });
-
-      await admin.auth().setCustomUserClaims(decodedToken.uid, {
-        userId: newUser.id,
-      });
-
-      return { decodedToken, userInfo: newUser };
     }
+
+    const newUser = await this.userServices.createANewUser({
+      email: decodedToken.email,
+      fullName: decodedToken.name,
+      profileImage: decodedToken.picture,
+      emailVerified: decodedToken.email_verified,
+      password: decodedToken.sub,
+    });
+
+    await admin.auth().setCustomUserClaims(decodedToken.uid, {
+      userId: newUser.id,
+    });
+
+    return { decodedToken, userInfo: newUser };
   }
 
   async createSessionCookie(accessToken: string): Promise<{
@@ -74,6 +113,7 @@ export class AuthService {
       await admin.auth().revokeRefreshTokens(decodedToken.sub);
     } catch (error) {
       if (error instanceof Error) {
+        console.log(error);
         throw new UnauthorizedException();
       }
 

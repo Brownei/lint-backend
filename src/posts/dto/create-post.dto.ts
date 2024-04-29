@@ -1,4 +1,5 @@
-import { IsString } from 'class-validator';
+import { ApiProperty } from '@nestjs/swagger';
+import { IsArray, IsNotEmpty, IsString } from 'class-validator';
 
 export class CreatePostDto {
   @IsString()
@@ -7,17 +8,10 @@ export class CreatePostDto {
   @IsString()
   description: string;
 
-  @IsString()
-  problem: string;
-
-  @IsString()
-  solution: string;
-
-  @IsString()
-  requirements: string;
-
-  @IsString()
-  techStacks: string;
-
-  IsPaid: boolean;
+  @ApiProperty({
+    isArray: true,
+  })
+  @IsArray()
+  @IsNotEmpty()
+  toolsTags: string[];
 }

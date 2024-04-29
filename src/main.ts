@@ -2,8 +2,8 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { Logger, ValidationPipe } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
-// import * as session from 'express-session';
-// import * as cookieParser from 'cookie-parser';
+import * as session from 'express-session';
+import * as cookieParser from 'cookie-parser';
 
 async function server() {
   const docsRoute = 'docs';
@@ -18,22 +18,22 @@ async function server() {
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup(docsRoute, app, document);
 
-  // app.use(
-  //   session({
-  //     secret: process.env.JWT_SECRET,
-  //     resave: false,
-  //     saveUninitialized: false,
-  //     cookie: {
-  //       maxAge: 60000,
-  //     },
-  //   }),
-  // );
+  app.use(
+    session({
+      secret: process.env.JWT_SECRET,
+      resave: false,
+      saveUninitialized: false,
+      cookie: {
+        maxAge: 60000,
+      },
+    }),
+  );
 
   app.enableCors({
     origin: ['http://localhost:5173'],
     credentials: true,
   });
-  // app.use(cookieParser());
+  app.use(cookieParser());
 
   app.useGlobalPipes(new ValidationPipe());
 

@@ -6,7 +6,7 @@ CREATE TABLE "User" (
     "id" SERIAL NOT NULL,
     "fullName" VARCHAR(255) NOT NULL,
     "email" VARCHAR(255) NOT NULL,
-    "password" TEXT,
+    "password" TEXT NOT NULL,
     "emailVerified" BOOLEAN NOT NULL DEFAULT false,
     "profileImage" TEXT NOT NULL DEFAULT '',
 
@@ -17,26 +17,24 @@ CREATE TABLE "User" (
 CREATE TABLE "Profile" (
     "id" SERIAL NOT NULL,
     "username" TEXT NOT NULL,
+    "fullName" VARCHAR(255) NOT NULL,
     "occupation" TEXT NOT NULL,
     "location" TEXT NOT NULL,
     "bio" TEXT NOT NULL,
     "links" TEXT[],
     "profileImage" TEXT NOT NULL,
     "userId" INTEGER NOT NULL,
+    "createdAt" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "Profile_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
 CREATE TABLE "Post" (
-    "id" SERIAL NOT NULL,
+    "id" TEXT NOT NULL,
     "title" VARCHAR(255) NOT NULL,
     "description" TEXT NOT NULL,
-    "techStacks" TEXT NOT NULL,
-    "problem" TEXT NOT NULL,
-    "solution" TEXT NOT NULL,
-    "requirements" TEXT NOT NULL,
-    "isPaid" BOOLEAN NOT NULL,
+    "toolsTags" TEXT[],
     "profileId" INTEGER NOT NULL,
     "createdAt" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
@@ -45,27 +43,27 @@ CREATE TABLE "Post" (
 
 -- CreateTable
 CREATE TABLE "Message" (
-    "id" SERIAL NOT NULL,
+    "id" TEXT NOT NULL,
     "content" TEXT NOT NULL,
     "createdAt" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "creatorId" INTEGER NOT NULL,
-    "conversationId" INTEGER NOT NULL,
+    "conversationId" TEXT NOT NULL,
 
     CONSTRAINT "Message_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
 CREATE TABLE "MessageAttachement" (
-    "id" SERIAL NOT NULL,
+    "id" TEXT NOT NULL,
     "attachments" TEXT NOT NULL,
-    "messageId" INTEGER NOT NULL,
+    "messageId" TEXT NOT NULL,
 
     CONSTRAINT "MessageAttachement_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
 CREATE TABLE "Conversation" (
-    "id" SERIAL NOT NULL,
+    "id" TEXT NOT NULL,
     "creatorId" INTEGER NOT NULL,
     "recipientId" INTEGER NOT NULL,
     "createdAt" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -75,10 +73,11 @@ CREATE TABLE "Conversation" (
 
 -- CreateTable
 CREATE TABLE "CollaboratorRequest" (
-    "id" SERIAL NOT NULL,
+    "id" TEXT NOT NULL,
     "senderId" INTEGER NOT NULL,
     "receiverId" INTEGER NOT NULL,
-    "postId" INTEGER NOT NULL,
+    "postId" TEXT NOT NULL,
+    "content" TEXT NOT NULL,
     "createdAt" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "status" "Status" NOT NULL,
 

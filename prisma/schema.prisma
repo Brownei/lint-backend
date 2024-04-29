@@ -10,53 +10,51 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url = env("POSTGRES_PRISMA_URL")
-  directUrl = env("POSTGRES_URL_NON_POOLING")
+  url      = env("DATABASE_URL")
+  // directUrl = env("POSTGRES_URL_NON_POOLING")
 }
 
 model User {
-  id              Int       @id @default(autoincrement())
-  fullName        String    @db.VarChar(255)
-  email           String    @unique @db.VarChar(255)
-  password        String?
-  emailVerified   Boolean   @default(false)
-  profileImage    String    @default("")
-  profile         Profile?
+  id            Int      @id @default(autoincrement())
+  fullName      String   @db.VarChar(255)
+  email         String   @unique @db.VarChar(255)
+  password      String
+  emailVerified Boolean  @default(false)
+  profileImage  String   @default("")
+  profile       Profile?
 }
 
 model Profile {
-  id                Int     @id @default(autoincrement())
-  username          String  @unique
-  occupation        String
-  location          String
-  bio               String
-  links             String[]
-  profileImage      String
-  post              Post[]
-  messages          Message[]
-  collaboratorRequestSent       CollaboratorRequest[]   @relation("collaboratorRequestSender")
-  collaboratorRequestReceived   CollaboratorRequest[]    @relation("collaboratorRequestReceiver")
-  conversationsCreated        Conversation[]    @relation("conversationCreator")
-  conversationsReceived       Conversation[]    @relation("conversationReceiver")
-  collaboratorSender          Collaborators[]   @relation("collaboratorSender")
-  collaboratorReceiver        Collaborators[]   @relation("collaboratorReceiver")
-  userId            Int     @unique
-  User              User    @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  id                          Int                   @id @default(autoincrement())
+  username                    String                @unique
+  fullName                    String                @db.VarChar(255)
+  occupation                  String
+  location                    String
+  bio                         String
+  links                       String[]
+  profileImage                String
+  post                        Post[]
+  messages                    Message[]
+  collaboratorRequestSent     CollaboratorRequest[] @relation("collaboratorRequestSender")
+  collaboratorRequestReceived CollaboratorRequest[] @relation("collaboratorRequestReceiver")
+  conversationsCreated        Conversation[]        @relation("conversationCreator")
+  conversationsReceived       Conversation[]        @relation("conversationReceiver")
+  collaboratorSender          Collaborators[]       @relation("collaboratorSender")
+  collaboratorReceiver        Collaborators[]       @relation("collaboratorReceiver")
+  userId                      Int                   @unique
+  User                        User                  @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  createdAt                   DateTime              @default(now()) @db.Timestamp(6)
 }
 
 model Post {
-  id             Int      @id @default(autoincrement())
-  title          String   @db.VarChar(255)
-  description    String
-  techStacks     String
-  problem        String
-  solution       String
-  requirements   String
-  isPaid         Boolean
-  requests       CollaboratorRequest[]
-  profileId      Int
-  profile        Profile   @relation(fields: [profileId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  createdAt     DateTime @default(now()) @db.Timestamp(6)
+  id          String                @id @default(uuid())
+  title       String                @db.VarChar(255)
+  description String
+  toolsTags   String[]
+  requests    CollaboratorRequest[]
+  profileId   Int
+  profile     Profile               @relation(fields: [profileId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  createdAt   DateTime              @default(now()) @db.Timestamp(6)
 }
 
 // model Link {
@@ -67,52 +65,53 @@ model Post {
 // }
 
 model Message {
-  id              Int      @id @default(autoincrement())
-  content         String
-  createdAt       DateTime    @default(now()) @db.Timestamp(6)
-  creatorId       Int
-  creator         Profile       @relation(fields: [creatorId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  conversationId  Int
-  conversation    Conversation  @relation(fields: [conversationId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  attachments     MessageAttachement[]
+  id             String               @id @default(uuid())
+  content        String
+  createdAt      DateTime             @default(now()) @db.Timestamp(6)
+  creatorId      Int
+  creator        Profile              @relation(fields: [creatorId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  conversationId String
+  conversation   Conversation         @relation(fields: [conversationId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  attachments    MessageAttachement[]
 }
 
 model MessageAttachement {
-  id              Int      @id @default(autoincrement())
-  attachments     String
-  messageId       Int
-  message         Message   @relation(fields: [messageId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  id          String  @id @default(uuid())
+  attachments String
+  messageId   String
+  message     Message @relation(fields: [messageId], references: [id], onDelete: NoAction, onUpdate: NoAction)
 }
 
 model Conversation {
-  id               Int      @id @default(autoincrement())
-  creatorId        Int
-  creator          Profile   @relation("conversationCreator", fields: [creatorId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  recipientId      Int
-  recipient        Profile  @relation("conversationReceiver", fields: [recipientId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  messages         Message[]
-  createdAt        DateTime   @default(now()) @db.Timestamp(6)
+  id          String    @id @default(uuid())
+  creatorId   Int
+  creator     Profile   @relation("conversationCreator", fields: [creatorId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  recipientId Int
+  recipient   Profile   @relation("conversationReceiver", fields: [recipientId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  messages    Message[]
+  createdAt   DateTime  @default(now()) @db.Timestamp(6)
 }
 
 model CollaboratorRequest {
-  id               Int      @id @default(autoincrement())
-  senderId        Int
-  sender          Profile   @relation("collaboratorRequestSender", fields: [senderId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  receiverId      Int
-  receiver        Profile   @relation("collaboratorRequestReceiver", fields: [receiverId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  postId          Int
-  post            Post  @relation(fields: [postId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  createdAt       DateTime  @default(now()) @db.Timestamp(6)
-  status          Status
+  id         String   @id @default(uuid())
+  senderId   Int
+  sender     Profile  @relation("collaboratorRequestSender", fields: [senderId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  receiverId Int
+  receiver   Profile  @relation("collaboratorRequestReceiver", fields: [receiverId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  postId     String
+  post       Post     @relation(fields: [postId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  content    String
+  createdAt  DateTime @default(now()) @db.Timestamp(6)
+  status     Status
 }
 
 model Collaborators {
-  id               Int      @id @default(autoincrement())
-  senderId         Int
-  sender          Profile   @relation("collaboratorSender", fields: [senderId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  receiverId      Int
-  receiver        Profile   @relation("collaboratorReceiver", fields: [receiverId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  createdAt       DateTime    @default(now()) @db.Timestamp(6)
+  id         Int      @id @default(autoincrement())
+  senderId   Int
+  sender     Profile  @relation("collaboratorSender", fields: [senderId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  receiverId Int
+  receiver   Profile  @relation("collaboratorReceiver", fields: [receiverId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  createdAt  DateTime @default(now()) @db.Timestamp(6)
 }
 
 enum Status {

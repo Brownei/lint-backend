@@ -6,7 +6,7 @@ import {
   Patch,
   Param,
   Delete,
-  ParseIntPipe,
+  ParseUUIDPipe,
 } from '@nestjs/common';
 import { MessagesService } from './messages.service';
 import { CreateMessageDto } from './dto/create-message.dto';
@@ -24,7 +24,7 @@ export class MessagesController {
   @Post()
   async createMessage(
     @CurrentUser('id') userId: number,
-    @Param('id', ParseIntPipe) conversationId: number,
+    @Param('id', ParseUUIDPipe) conversationId: string,
     @Body() createMessageDto: CreateMessageDto,
   ) {
     const { content, attachments } = createMessageDto;
@@ -46,7 +46,7 @@ export class MessagesController {
   @Get()
   async getMessagesFromConversation(
     @CurrentUser('id') userId: number,
-    @Param('id', ParseIntPipe) conversationId: number,
+    @Param('id', ParseUUIDPipe) conversationId: string,
   ) {
     const messages = await this.messagesService.getMessages(conversationId);
     return { conversationId, messages };
@@ -55,8 +55,8 @@ export class MessagesController {
   @Delete(':messageId')
   async deleteMessageFromConversation(
     @CurrentUser('id') userId: number,
-    @Param('id', ParseIntPipe) conversationId: number,
-    @Param('messageId', ParseIntPipe) messageId: number,
+    @Param('id', ParseUUIDPipe) conversationId: string,
+    @Param('messageId', ParseUUIDPipe) messageId: string,
   ) {
     // const params = { userId, conversationId, messageId };
     await this.messagesService.deleteMessage(userId, conversationId, messageId);
@@ -67,8 +67,8 @@ export class MessagesController {
   @Patch(':messageId')
   async editMessage(
     @CurrentUser('id') userId: number,
-    @Param('id') conversationId: number,
-    @Param('messageId') messageId: number,
+    @Param('id', ParseUUIDPipe) conversationId: string,
+    @Param('messageId', ParseUUIDPipe) messageId: string,
     @Body() { content }: EditMessageDto,
   ) {
     const message = await this.messagesService.editMessage(
