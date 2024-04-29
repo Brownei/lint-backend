@@ -2,14 +2,14 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { Logger, ValidationPipe } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
-import * as session from 'express-session';
-import * as cookieParser from 'cookie-parser';
+import session from 'express-session';
+import cookieParser from 'cookie-parser';
 import {NestExpressApplication} from '@nestjs/platform-express';
 
 async function server() {
   const docsRoute = 'docs';
   const port = process.env.APP_PORT || 3000;
-  const app = await NestFactory.create<NestExpressApplication>(AppModule);
+  const app = await NestFactory.create<NestExpressApplication>(AppModule, { bodyParser: true });
 
   const config = new DocumentBuilder()
     .setTitle('LinT Api')
@@ -21,7 +21,7 @@ async function server() {
 
   app.use(
     session({
-      secret: process.env.JWT_SECRET,
+      secret: process.env.JWT_SECRET as string,
       resave: false,
       saveUninitialized: false,
       cookie: {
