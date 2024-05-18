@@ -10,17 +10,19 @@ async function server() {
   const port = process.env.APP_PORT || 3000;
   const app = await NestFactory.create(AppModule);
 
-  app.enableCors({
-    origin: ['http://localhost:5173', 'https://lint-app-five.vercel.app'],
-    credentials: true,
-    allowedHeaders: [
-      'Accept',
-      'Authorization',
-      'Content-Type',
-      'X-Requested-With',
-    ],
-    methods: ['GET', 'PUT', 'PATCH', 'POST', 'DELETE', 'OPTIONS'],
-  });
+  // app.enableCors({
+  //   origin: ['http://localhost:5173', 'https://lint-app-five.vercel.app'],
+  //   credentials: true,
+  //   allowedHeaders: [
+  //     'Accept',
+  //     'Authorization',
+  //     'Content-Type',
+  //     'X-Requested-With',
+  //   ],
+  //   methods: ['GET', 'PUT', 'PATCH', 'POST', 'DELETE', 'OPTIONS'],
+  // });
+
+  app.enableCors();
 
   const config = new DocumentBuilder()
     .setTitle('LinT Api')
