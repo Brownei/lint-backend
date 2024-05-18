@@ -11,16 +11,8 @@ async function server() {
   const app = await NestFactory.create(AppModule);
 
   app.enableCors({
-    origin: ['http://localhost:5173', 'https://lint-app-five.vercel.app'],
+    origin: ['http://127.0.0.1:5173', 'https://lint-app-five.vercel.app'],
     credentials: true,
-    allowedHeaders: [
-      'Accept',
-      'Authorization',
-      'Content-Type',
-      'X-Requested-With',
-      'Access-Control-Allow-Origin',
-    ],
-    methods: ['GET', 'PUT', 'PATCH', 'POST', 'DELETE', 'OPTIONS'],
   });
 
   // app.enableCors();
