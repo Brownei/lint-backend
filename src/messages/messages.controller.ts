@@ -7,6 +7,7 @@ import {
   Param,
   Delete,
   ParseUUIDPipe,
+  UseGuards,
 } from '@nestjs/common';
 import { MessagesService } from './messages.service';
 import { CreateMessageDto } from './dto/create-message.dto';
@@ -15,6 +16,7 @@ import { EmptyMessageException } from './exceptions/EmptyMessageException';
 import { EditMessageDto } from './dto/edit-message.dto';
 import { ApiTags } from '@nestjs/swagger';
 import { pusher } from '../pusher.module';
+import { FirebaseAuthGuard } from 'src/auth/guard/firebase.guard';
 
 @ApiTags('conversations/:id/messages')
 @Controller('conversations/:id/messages')
@@ -22,6 +24,7 @@ export class MessagesController {
   constructor(private readonly messagesService: MessagesService) {}
 
   @Post()
+  @UseGuards(FirebaseAuthGuard)
   async createMessage(
     @CurrentUser('id') userId: number,
     @Param('id', ParseUUIDPipe) conversationId: string,
@@ -44,6 +47,7 @@ export class MessagesController {
   }
 
   @Get()
+  @UseGuards(FirebaseAuthGuard)
   async getMessagesFromConversation(
     @CurrentUser('id') userId: number,
     @Param('id', ParseUUIDPipe) conversationId: string,
@@ -53,6 +57,7 @@ export class MessagesController {
   }
 
   @Delete(':messageId')
+  @UseGuards(FirebaseAuthGuard)
   async deleteMessageFromConversation(
     @CurrentUser('id') userId: number,
     @Param('id', ParseUUIDPipe) conversationId: string,
@@ -65,6 +70,7 @@ export class MessagesController {
 
   // api/conversations/:conversationId/messages/:messageId
   @Patch(':messageId')
+  @UseGuards(FirebaseAuthGuard)
   async editMessage(
     @CurrentUser('id') userId: number,
     @Param('id', ParseUUIDPipe) conversationId: string,

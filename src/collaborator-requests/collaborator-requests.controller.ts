@@ -9,6 +9,7 @@ import {
   Put,
   ParseUUIDPipe,
   UnauthorizedException,
+  UseGuards,
 } from '@nestjs/common';
 import { CollaboratorRequestService } from './collaborator-requests.service';
 import { ApiTags } from '@nestjs/swagger';
@@ -17,6 +18,7 @@ import { CreateCollaboratorRequestDto } from './dto/create-collaborator-request.
 import { UsersService } from '../users/services/users.service';
 import { PostsService } from '../posts/posts.service';
 import { UpdateCollaboratorRequestDto } from './dto/update-collaboration-requests.dto';
+import { FirebaseAuthGuard } from 'src/auth/guard/firebase.guard';
 
 @ApiTags('collaborators/requests')
 @Controller('collaborators/requests')
@@ -28,6 +30,7 @@ export class CollaboratorRequestController {
   ) {}
 
   @Get('sent')
+  @UseGuards(FirebaseAuthGuard)
   async getCollaboratorRequestsSent(@CurrentUser('email') email: string) {
     return await this.collaboratorRequestService.getCollaboratorRequestsSent(
       email,
@@ -35,6 +38,7 @@ export class CollaboratorRequestController {
   }
 
   @Get('received')
+  @UseGuards(FirebaseAuthGuard)
   async getCollaboratorRequestsReceived(@CurrentUser('email') email: string) {
     return await this.collaboratorRequestService.getCollaboratorRequestsReceived(
       email,
@@ -42,6 +46,7 @@ export class CollaboratorRequestController {
   }
 
   @Post()
+  @UseGuards(FirebaseAuthGuard)
   async createCollaboratorRequest(
     @CurrentUser('email') email: string,
     @Body() DTO: CreateCollaboratorRequestDto,
@@ -65,6 +70,7 @@ export class CollaboratorRequestController {
   }
 
   @Delete(':id/cancel')
+  @UseGuards(FirebaseAuthGuard)
   async cancelFriendRequest(
     @CurrentUser('id') userId: number,
     @Param('id', ParseUUIDPipe) id: string,
@@ -75,6 +81,7 @@ export class CollaboratorRequestController {
   }
 
   @Put(':id/accept')
+  @UseGuards(FirebaseAuthGuard)
   async acceptFriendRequest(
     @CurrentUser('email') email: string,
     @Param('id', ParseUUIDPipe) id: string,
@@ -93,6 +100,7 @@ export class CollaboratorRequestController {
   }
 
   @Patch(':id/reject')
+  @UseGuards(FirebaseAuthGuard)
   async rejectFriendRequest(
     @CurrentUser('id') userId: number,
     @Param('id', ParseUUIDPipe) id: string,

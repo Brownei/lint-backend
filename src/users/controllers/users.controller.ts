@@ -6,6 +6,7 @@ import {
   Param,
   Delete,
   Put,
+  UseGuards,
 } from '@nestjs/common';
 import {
   ApiBody,
@@ -21,6 +22,7 @@ import { CreateUserDto } from '../dto/create-user.dto';
 import { UpdateUserDto } from '../dto/update-user.dto';
 import { CurrentUser } from '../../auth/guard/auth.guard';
 import { Public } from '../../decorators/public.decorator';
+import { FirebaseAuthGuard } from 'src/auth/guard/firebase.guard';
 
 @ApiTags('users')
 @Controller('users')
@@ -34,16 +36,19 @@ export class UsersController {
   @ApiBadRequestResponse({ description: 'Something is missing and wrong!' })
   @ApiNotFoundResponse({ description: 'User not found!' })
   @Public()
+  @UseGuards(FirebaseAuthGuard)
   async create(@Body() createUserDto: CreateUserDto) {
     return this.usersService.createANewUser(createUserDto);
   }
 
   @Get()
+  @UseGuards(FirebaseAuthGuard)
   async findAll() {
     return this.usersService.findAllUsers();
   }
 
   @Get(':id')
+  @UseGuards(FirebaseAuthGuard)
   @ApiNotFoundResponse({ description: 'Id not found' })
   @ApiOkResponse()
   async findOne(@Param('id') id: string) {
@@ -51,6 +56,7 @@ export class UsersController {
   }
 
   @Get(':firstName')
+  @UseGuards(FirebaseAuthGuard)
   @ApiNotFoundResponse({ description: 'Id not found' })
   @ApiOkResponse()
   async findOneByFistName(@Param('firstName') id: string) {
@@ -58,6 +64,7 @@ export class UsersController {
   }
 
   @Put(':firstName')
+  @UseGuards(FirebaseAuthGuard)
   @ApiOkResponse()
   @ApiNotFoundResponse({ description: 'Id not found' })
   async update(
@@ -69,6 +76,7 @@ export class UsersController {
   }
 
   @Delete(':firstName')
+  @UseGuards(FirebaseAuthGuard)
   @ApiNotFoundResponse({ description: 'Id not found' })
   async remove(
     @CurrentUser('id') userId: number,

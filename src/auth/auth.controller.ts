@@ -10,12 +10,14 @@ import {
   BadRequestException,
   NotAcceptableException,
   HttpException,
+  UseGuards,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { ApiTags } from '@nestjs/swagger';
 import { Response, Request } from 'express';
 import { config } from 'dotenv';
 import { Public } from '../decorators/public.decorator';
+import { FirebaseAuthGuard } from './guard/firebase.guard';
 
 config();
 
@@ -26,6 +28,7 @@ export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   @Public()
+  @UseGuards(FirebaseAuthGuard)
   @Post('google/login')
   async login(@Req() req: Request, @Res() res: Response) {
     let accessToken: string;
@@ -68,6 +71,7 @@ export class AuthController {
   }
 
   @Public()
+  @UseGuards(FirebaseAuthGuard)
   @Post('google/register')
   async register(@Req() req: Request, @Res() res: Response) {
     let accessToken: string;
@@ -110,6 +114,7 @@ export class AuthController {
   }
 
   @Get('user')
+  @UseGuards(FirebaseAuthGuard)
   async getUserInfo(@Req() req, @Res() res: Response) {
     const accessToken = req.cookies.session;
     try {
@@ -128,6 +133,7 @@ export class AuthController {
   }
 
   @Post('logout')
+  @UseGuards(FirebaseAuthGuard)
   async logout(@Res({ passthrough: true }) res: Response, @Req() req: Request) {
     try {
       const accessToken = req.cookies.session as string | undefined | null;

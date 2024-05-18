@@ -1,9 +1,9 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 // import { AuthorizationGuard } from './guard/auth.guard';
-import { APP_GUARD } from '@nestjs/core';
+// import { APP_GUARD } from '@nestjs/core';
 import { EventEmitterModule } from '@nestjs/event-emitter';
-import { FirebaseAuthGuard } from './auth/guard/firebase.guard';
+// import { FirebaseAuthGuard } from './auth/guard/firebase.guard';
 import { AuthModule } from './auth/auth.module';
 import { CollaboratorRequestModule } from './collaborator-requests/collaborator-requests.module';
 import { ConversationsModule } from './conversations/conversations.module';
@@ -25,13 +25,7 @@ import { AppService } from './app.service';
     ConversationsModule,
   ],
   controllers: [AppController],
-  providers: [
-    {
-      provide: APP_GUARD,
-      useClass: FirebaseAuthGuard,
-    },
-    AppService,
-  ],
+  providers: [AppService],
 })
 export class AppModule {
   constructor() {}

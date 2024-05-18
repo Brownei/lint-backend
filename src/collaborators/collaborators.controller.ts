@@ -1,7 +1,15 @@
-import { Controller, Get, Param, Delete, ParseIntPipe } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Param,
+  Delete,
+  ParseIntPipe,
+  UseGuards,
+} from '@nestjs/common';
 import { CollaboratorsService } from './collaborators.service';
 import { CurrentUser } from '../auth/guard/auth.guard';
 import { ApiTags } from '@nestjs/swagger';
+import { FirebaseAuthGuard } from 'src/auth/guard/firebase.guard';
 
 @ApiTags('collaborators')
 @Controller('collaborators')
@@ -9,11 +17,13 @@ export class CollaboratorsController {
   constructor(private readonly collaboratorsService: CollaboratorsService) {}
 
   @Get()
+  @UseGuards(FirebaseAuthGuard)
   async getAllCollaborators(@CurrentUser('id', ParseIntPipe) id: number) {
     return await this.collaboratorsService.getAllCollaborators(id);
   }
 
   @Delete(':id/delete')
+  @UseGuards(FirebaseAuthGuard)
   async deleteCollaborator(
     @CurrentUser('id') userId: number,
     @Param('id', ParseIntPipe) id: number,
