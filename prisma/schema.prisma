@@ -119,3 +119,8 @@ enum Status {
   pending
   rejected
 }
+
+enum Brown {
+  deep
+  heavy
+}

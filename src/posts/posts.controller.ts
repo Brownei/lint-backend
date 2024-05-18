@@ -42,6 +42,6 @@ export class PostsController {
 
   @Delete('/:id')
   async remove(@Param('id', ParseUUIDPipe) id: string) {
-    return  this.postsService.remove(+id);
+    return this.postsService.remove(+id);
   }
 }

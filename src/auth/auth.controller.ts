@@ -23,9 +23,7 @@ config();
 @Controller('auth')
 export class AuthController {
   private readonly logger = new Logger(AuthController.name);
-  constructor(
-    private readonly authService: AuthService,
-  ) {}
+  constructor(private readonly authService: AuthService) {}
 
   @Public()
   @Post('google/login')
@@ -112,10 +110,13 @@ export class AuthController {
   }
 
   @Get('user')
-  async getUserInfo(@Req() req: Request, @Res() res: Response) {
+  async getUserInfo(@Req() req, @Res() res: Response) {
+    const accessToken = req.cookies.session;
     try {
-      const user = await this.authService.getUserInfo(req.user.email);
-      res.send(user);
+      const accessedUser = await this.authService.verifyToken(accessToken);
+      console.log('accessedUser', accessedUser);
+      // const user = await this.authService.getUserInfo(accessedUser.email);
+      res.send(accessedUser);
     } catch (error) {
       if (error instanceof Error) {
         console.log(error);
@@ -129,7 +130,7 @@ export class AuthController {
   @Post('logout')
   async logout(@Res({ passthrough: true }) res: Response, @Req() req: Request) {
     try {
-	  const accessToken = req.cookies.session as string | undefined | null
+      const accessToken = req.cookies.session as string | undefined | null;
 
       if (!accessToken) {
         throw new UnauthorizedException('No access token!');

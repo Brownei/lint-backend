@@ -27,10 +27,11 @@ export class ProfileController {
 
   @Get('/:userName')
   async getProfile(
-    @CurrentUser('id') id: number,
+    @CurrentUser('email') email: string,
     @Param('userName') userName: string,
   ) {
-    return await this.profileService.getProfile(userName, id);
+    // console.log(email, userName);
+    return await this.profileService.getProfile(userName, email);
   }
 
   @Get('post/:id')

@@ -1,6 +1,7 @@
 import {
   ConflictException,
   Injectable,
+  NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
 import { DecodedIdToken } from 'firebase-admin/auth';
@@ -119,5 +120,29 @@ export class AuthService {
 
       throw new ConflictException();
     }
+  }
+
+  async verifyToken(accessToken: string) {
+    const decodedToken = await admin.auth().verifySessionCookie(accessToken);
+
+    console.log(decodedToken);
+
+    const userInfo = await prisma.user.findUnique({
+      where: {
+        email: decodedToken.email,
+      },
+      select: {
+        email: true,
+        emailVerified: true,
+        fullName: true,
+        id: true,
+        profile: true,
+        profileImage: true,
+      },
+    });
+
+    if (!userInfo) throw new NotFoundException('User not found!');
+
+    return userInfo;
   }
 }

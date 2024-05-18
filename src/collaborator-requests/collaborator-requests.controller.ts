@@ -8,11 +8,11 @@ import {
   Delete,
   Put,
   ParseUUIDPipe,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { CollaboratorRequestService } from './collaborator-requests.service';
 import { ApiTags } from '@nestjs/swagger';
 import { CurrentUser } from '../auth/guard/auth.guard';
-import { EventEmitter2 } from '@nestjs/event-emitter';
 import { CreateCollaboratorRequestDto } from './dto/create-collaborator-request.dto';
 import { UsersService } from '../users/services/users.service';
 import { PostsService } from '../posts/posts.service';
@@ -48,13 +48,16 @@ export class CollaboratorRequestController {
   ) {
     const sender = await this.userService.findOneUserByEmail(email);
     const receiver = await this.userService.findOneUserById(DTO.receiverId);
-    console.log(sender.id)
-	const postInterested = await this.postService.findOne(DTO.postId);
+    const postInterested = await this.postService.findOne(DTO.postId);
+
+    if (!sender || !receiver || !postInterested)
+      throw new UnauthorizedException();
+
     const response = await this.collaboratorRequestService.create(
       sender.id,
-      DTO.receiverId,
-      DTO.postId,
-	  DTO.content
+      receiver.id,
+      postInterested.id,
+      DTO.content,
     );
     const payload = { sender, receiver, postInterested };
     console.log(payload);
@@ -71,15 +74,21 @@ export class CollaboratorRequestController {
     return response;
   }
 
-  @Put('/accept')
+  @Put(':id/accept')
   async acceptFriendRequest(
-    @CurrentUser('id') userId: number,
+    @CurrentUser('email') email: string,
+    @Param('id', ParseUUIDPipe) id: string,
     @Body() DTO: UpdateCollaboratorRequestDto,
   ) {
-    const response = await this.collaboratorRequestService.accept(DTO, userId);
-    // const sender = await this.userService.findOneUserById(userId);
-    // const receiver = await this.userService.findOneUserById(DTO.requestId);
-    // const payload = { sender };
+    const receiver = await this.userService.findOneUserByEmail(email);
+
+    if (!receiver) throw new UnauthorizedException();
+
+    const response = await this.collaboratorRequestService.accept(
+      DTO,
+      id,
+      receiver.id,
+    );
     return response;
   }
 

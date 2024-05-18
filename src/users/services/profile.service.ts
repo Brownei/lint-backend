@@ -55,21 +55,37 @@ export class ProfileService {
   }
 
   //GET MY PROFILE
-  async getProfile(username: string, currentUserId: number) {
-    const currentProfile = await prisma.profile.findUnique({
-      where: {
-        username,
-      },
-    });
+  async getProfile(username: string, email: string) {
+    try {
+      const currentProfile = await prisma.profile.findUnique({
+        where: {
+          username,
+        },
+      });
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { userId, ...otherDetails } = currentProfile;
+      const currentUser = await prisma.user.findUnique({
+        where: {
+          email,
+        },
+        select: {
+          profile: true,
+        },
+      });
 
-    if (currentProfile.id !== currentUserId) {
-      return otherDetails;
+      if (!currentProfile || !currentUser) throw new UserNotFoundException();
+
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { userId, ...otherDetails } = currentProfile;
+
+      if (currentProfile.id !== currentUser.profile.id) {
+        return otherDetails;
+      }
+
+      return currentProfile;
+    } catch (error) {
+      console.log(error);
+      throw new UnauthorizedException();
     }
-
-    return currentProfile;
   }
 
   async getProfileThroughUserEmail(email: string) {

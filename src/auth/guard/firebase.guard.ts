@@ -4,7 +4,7 @@ import {
   Injectable,
   Logger,
 } from '@nestjs/common';
-import { response, type Request } from 'express';
+import { type Request } from 'express';
 import { admin } from '../firebase-admin.module';
 import { Reflector } from '@nestjs/core';
 import { IS_PUBLIC_KEY } from '../../decorators/public.decorator';
@@ -20,9 +20,10 @@ export type ReqWithUser = Request & {
 @Injectable()
 export class FirebaseAuthGuard implements CanActivate {
   constructor(private reflector: Reflector) {}
-  logger = new Logger();  
+  logger = new Logger();
 
   public async canActivate(context: ExecutionContext): Promise<boolean> {
+    let sessionCookie: string;
     const isPublic = this.reflector.getAllAndOverride<boolean>(IS_PUBLIC_KEY, [
       context.getHandler(),
       context.getClass(),
@@ -31,9 +32,14 @@ export class FirebaseAuthGuard implements CanActivate {
     if (isPublic) {
       return true;
     }
+    const request = context.switchToHttp().getRequest();
 
-    const request = context.switchToHttp().getRequest<Request>();
-    const sessionCookie = request.cookies.session as string | undefined | null
+    const [type, token] = request.headers.authorization?.split(' ') ?? [];
+    if (!token) return false;
+
+    if (type === 'Bearer') {
+      sessionCookie = token;
+    }
 
     if (!sessionCookie) return false;
 
@@ -42,7 +48,9 @@ export class FirebaseAuthGuard implements CanActivate {
         .auth()
         .verifySessionCookie(sessionCookie);
 
-      if (!decodedClaims.email) return false;
+      // console.log(decodedClaims);
+
+      if (!decodedClaims) return false;
 
       request.user = {
         email: decodedClaims.email,

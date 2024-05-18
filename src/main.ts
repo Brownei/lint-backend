@@ -4,12 +4,14 @@ import { Logger, ValidationPipe } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import session from 'express-session';
 import cookieParser from 'cookie-parser';
-import {NestExpressApplication} from '@nestjs/platform-express';
+import { NestExpressApplication } from '@nestjs/platform-express';
 
 async function server() {
   const docsRoute = 'docs';
   const port = process.env.APP_PORT || 3000;
-  const app = await NestFactory.create<NestExpressApplication>(AppModule, { bodyParser: true });
+  const app = await NestFactory.create<NestExpressApplication>(AppModule, {
+    bodyParser: true,
+  });
 
   const config = new DocumentBuilder()
     .setTitle('LinT Api')
@@ -32,6 +34,15 @@ async function server() {
 
   app.enableCors({
     origin: ['http://localhost:5173'],
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+    allowedHeaders: [
+      'Origin',
+      'X-Requested-With',
+      'Content-Type',
+      'Accept',
+      'Authorization',
+      'Cookie',
+    ],
     credentials: true,
   });
   app.use(cookieParser());

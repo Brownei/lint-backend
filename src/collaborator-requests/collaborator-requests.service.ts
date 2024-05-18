@@ -1,4 +1,9 @@
-import { ConflictException, Inject, Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  ConflictException,
+  Inject,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { UsersService } from '../users/services/users.service';
 import { CollaboratorsService } from '../collaborators/collaborators.service';
 import { CollaboratorAlreadyExists } from '../collaborators/exceptions/CollaboratorAlreadyExists';
@@ -49,11 +54,11 @@ export class CollaboratorRequestService {
 
   async getCollaboratorRequestsSent(email: string) {
     const status = 'pending';
-	const user = await prisma.user.findUnique({
-		where: {
-			email
-		}
-	})
+    const user = await prisma.user.findUnique({
+      where: {
+        email,
+      },
+    });
     const requestSent = await prisma.collaboratorRequest.findMany({
       where: {
         sender: {
@@ -68,11 +73,11 @@ export class CollaboratorRequestService {
 
   async getCollaboratorRequestsReceived(email: string) {
     const status = 'pending';
-	const user = await prisma.user.findUnique({
-		where: {
-			email
-		}
-	})
+    const user = await prisma.user.findUnique({
+      where: {
+        email,
+      },
+    });
     const requestReceived = await prisma.collaboratorRequest.findMany({
       where: {
         receiver: {
@@ -82,113 +87,117 @@ export class CollaboratorRequestService {
       },
       select: {
         post: {
-			select: {
-				id: true,
-				title: true,
-				createdAt: true
-			}
-			
-		},
+          select: {
+            id: true,
+            title: true,
+            createdAt: true,
+          },
+        },
         sender: {
-			select: {
-				occupation: true,
-				fullName: true,
-				username: true,
-				profileImage: true
-			}
-		},
-		content: true,
-		id: true,
-		createdAt: true
+          select: {
+            occupation: true,
+            fullName: true,
+            username: true,
+            profileImage: true,
+          },
+        },
+        content: true,
+        id: true,
+        createdAt: true,
       },
     });
 
     return requestReceived;
   }
 
-  async create(senderId: number, receiverId: number, postId: string, content: string) {
-	try {
-		const sender = await this.userService.findOneUserById(senderId);
-		const receiver = await this.userService.findOneUserById(receiverId);
-
-		const curentlyPending = await this.isPending(
-			sender.id,
-			postId,
-			receiver.id,
-		);
-
-		if (curentlyPending)
-			throw new CollaboratorException('Collaborator Requesting Pending');
-
-		if (receiverId === senderId)
-			throw new CollaboratorException('Cannot Collaborate With Yourself');
-
-		if (!sender || !receiver) throw new UnauthorizedException();
-
-		const areCollaborators = await prisma.collaboratorRequest.findFirst({
-			where: {
-				OR: [
-					{
-						senderId,
-						receiverId,
-					},
-					{
-						senderId: receiverId,
-						receiverId: senderId,
-					},
-				],
-			},
-		});
-
-		if (areCollaborators) throw new CollaboratorAlreadyExists();
-		const collaboratorRequest = await prisma.collaboratorRequest.create({
-			data: {
-				senderId,
-				receiverId,
-				postId,
-				content: content,
-				status: 'pending',
-			},
-		});
-
-		return collaboratorRequest;
-	} catch (error) {
-		console.log(error)
-		throw new ConflictException();
-	}
-  }
-
-  async accept(DTO: UpdateCollaboratorRequestDto, userId: number) {
-    const collaboratorRequest = await this.findById(DTO.requestId);
-    const sender = await this.userService.findOneUserById(DTO.receiverId);
-    const receiver = await this.userService.findOneUserById(userId);
-
-    if (!sender || !receiver) throw new UnauthorizedException();
-
-    if (!collaboratorRequest) throw new CollaboratorNotFoundException();
-    if (collaboratorRequest.status === 'accepted')
-      throw new CollaboratorException('Collaborator Request Already Accepted');
-    if (collaboratorRequest.sender?.id === userId)
-      throw new CollaboratorException('You cannot accept your own request');
-
-    const acceptedRequest = await prisma.collaboratorRequest.update({
-      where: {
-        id: collaboratorRequest.id,
-      },
-      data: {
-        status: 'accepted',
-      },
-    });
-
-    if (!acceptedRequest || acceptedRequest.status !== 'accepted') {
-      throw new UnauthorizedException();
-    } else {
-      await this.collaboratorService.createCollaborators(
-        sender.id,
-        receiver.id,
+  async create(
+    senderId: number,
+    receiverId: number,
+    postId: string,
+    content: string,
+  ) {
+    try {
+      const curentlyPending = await this.isPending(
+        senderId,
+        postId,
+        receiverId,
       );
 
-      return new SuccessAcceptedException();
+      if (curentlyPending)
+        throw new CollaboratorException('Collaborator Requesting Pending');
+
+      if (receiverId === senderId)
+        throw new CollaboratorException('Cannot Collaborate With Yourself');
+
+      const areCollaborators = await prisma.collaboratorRequest.findFirst({
+        where: {
+          OR: [
+            {
+              senderId,
+              receiverId,
+              postId,
+            },
+            {
+              senderId: receiverId,
+              receiverId: senderId,
+              postId,
+            },
+          ],
+        },
+      });
+
+      if (areCollaborators) throw new CollaboratorAlreadyExists();
+      const collaboratorRequest = await prisma.collaboratorRequest.create({
+        data: {
+          senderId,
+          receiverId,
+          postId,
+          content: content,
+          status: 'pending',
+        },
+      });
+
+      return collaboratorRequest;
+    } catch (error) {
+      console.log(error);
+      throw new ConflictException();
+    }
+  }
+
+  async accept(DTO: UpdateCollaboratorRequestDto, id: string, userId: number) {
+    try {
+      const collaboratorRequest = await this.findById(id);
+      const sender = await this.userService.findOneUserById(DTO.senderId);
+
+      if (!sender) throw new UnauthorizedException();
+
+      if (!collaboratorRequest) throw new CollaboratorNotFoundException();
+      if (collaboratorRequest.status === 'accepted')
+        throw new CollaboratorException(
+          'Collaborator Request Already Accepted',
+        );
+      if (collaboratorRequest.sender?.id === userId)
+        throw new CollaboratorException('You cannot accept your own request');
+
+      const acceptedRequest = await prisma.collaboratorRequest.update({
+        where: {
+          id: collaboratorRequest.id,
+        },
+        data: {
+          status: 'accepted',
+        },
+      });
+
+      if (!acceptedRequest || acceptedRequest.status !== 'accepted') {
+        throw new UnauthorizedException();
+      } else {
+        await this.collaboratorService.createCollaborators(sender.id, userId);
+
+        return new SuccessAcceptedException();
+      }
+    } catch (error) {
+      console.log(error);
+      throw new ConflictException();
     }
   }
 
