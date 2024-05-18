@@ -32,19 +32,7 @@ async function server() {
     }),
   );
 
-  app.enableCors({
-    origin: ['http://localhost:5173'],
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
-    allowedHeaders: [
-      'Origin',
-      'X-Requested-With',
-      'Content-Type',
-      'Accept',
-      'Authorization',
-      'Cookie',
-    ],
-    credentials: true,
-  });
+  app.enableCors();
   app.use(cookieParser());
 
   app.useGlobalPipes(new ValidationPipe());
