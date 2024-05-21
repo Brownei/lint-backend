@@ -14,11 +14,9 @@ import { CreateMessageDto } from './dto/create-message.dto';
 import { CurrentUser } from '../auth/guard/auth.guard';
 import { EmptyMessageException } from './exceptions/EmptyMessageException';
 import { EditMessageDto } from './dto/edit-message.dto';
-import { ApiTags } from '@nestjs/swagger';
 import { pusher } from '../pusher.module';
 import { FirebaseAuthGuard } from 'src/auth/guard/firebase.guard';
 
-@ApiTags('conversations/:id/messages')
 @Controller('conversations/:id/messages')
 export class MessagesController {
   constructor(private readonly messagesService: MessagesService) {}

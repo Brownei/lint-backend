@@ -9,12 +9,9 @@ import {
 } from '@nestjs/common';
 import { ProfileService } from '../services/profile.service';
 import { CurrentUser } from '../../auth/guard/auth.guard';
-import { ApiTags } from '@nestjs/swagger';
 import { CreateProfileDto } from '../dto/create-profile.dto';
 import { FirebaseAuthGuard } from 'src/auth/guard/firebase.guard';
 // import { Public } from 'src/decorators/public.decorator';
-
-@ApiTags('profile')
 @Controller('profile')
 export class ProfileController {
   constructor(private readonly profileService: ProfileService) {}

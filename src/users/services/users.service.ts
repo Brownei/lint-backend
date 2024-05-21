@@ -55,28 +55,26 @@ export class UsersService {
     return await prisma.user.findMany();
   }
 
-
   // FIND ALL USERS BY USERNAME
   async findOneUserByUserName(username: string) {
-	  const user = await prisma.profile.findUnique({
-		where: {
-			username
-		},
-		select: {
-			username: true,
-			profileImage: true,
-			post: true,
-			id: true
-		}
-	  })
+    const user = await prisma.profile.findUnique({
+      where: {
+        username,
+      },
+      select: {
+        username: true,
+        profileImage: true,
+        post: true,
+        id: true,
+      },
+    });
 
-	  if(!user) {
-		  throw new UnauthorizedException();
-	  }
+    if (!user) {
+      throw new UnauthorizedException();
+    }
 
-	  return user;
-	}
-
+    return user;
+  }
 
   //FINDING A PARTICULAR USER ACCOUNT
   async findOneUserById(id: number) {

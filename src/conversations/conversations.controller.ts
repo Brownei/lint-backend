@@ -2,10 +2,8 @@ import { Controller, Get, Post, Body, Param, UseGuards } from '@nestjs/common';
 import { ConversationsService } from './conversations.service';
 import { CreateConversationDto } from './dto/create-conversation.dto';
 import { CurrentUser } from '../auth/guard/auth.guard';
-import { ApiTags } from '@nestjs/swagger';
 import { FirebaseAuthGuard } from 'src/auth/guard/firebase.guard';
 
-@ApiTags('conversations')
 @Controller('conversations')
 export class ConversationsController {
   constructor(private readonly conversationsService: ConversationsService) {}

@@ -8,10 +8,8 @@ import {
 } from '@nestjs/common';
 import { CollaboratorsService } from './collaborators.service';
 import { CurrentUser } from '../auth/guard/auth.guard';
-import { ApiTags } from '@nestjs/swagger';
 import { FirebaseAuthGuard } from 'src/auth/guard/firebase.guard';
 
-@ApiTags('collaborators')
 @Controller('collaborators')
 export class CollaboratorsController {
   constructor(private readonly collaboratorsService: CollaboratorsService) {}

@@ -13,7 +13,6 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { ApiTags } from '@nestjs/swagger';
 import { Response, Request } from 'express';
 import { config } from 'dotenv';
 import { Public } from '../decorators/public.decorator';
@@ -21,7 +20,6 @@ import { FirebaseAuthGuard } from './guard/firebase.guard';
 
 config();
 
-@ApiTags('auth')
 @Controller('auth')
 export class AuthController {
   private readonly logger = new Logger(AuthController.name);

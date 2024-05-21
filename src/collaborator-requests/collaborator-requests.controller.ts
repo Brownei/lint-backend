@@ -12,15 +12,12 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { CollaboratorRequestService } from './collaborator-requests.service';
-import { ApiTags } from '@nestjs/swagger';
 import { CurrentUser } from '../auth/guard/auth.guard';
 import { CreateCollaboratorRequestDto } from './dto/create-collaborator-request.dto';
 import { UsersService } from '../users/services/users.service';
 import { PostsService } from '../posts/posts.service';
 import { UpdateCollaboratorRequestDto } from './dto/update-collaboration-requests.dto';
 import { FirebaseAuthGuard } from 'src/auth/guard/firebase.guard';
-
-@ApiTags('collaborators/requests')
 @Controller('collaborators/requests')
 export class CollaboratorRequestController {
   constructor(
