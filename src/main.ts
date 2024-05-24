@@ -20,6 +20,8 @@ async function server() {
 
   app.useGlobalPipes(new ValidationPipe());
 
+  app.setGlobalPrefix('/api');
+
   app.enableCors();
 
   await app.listen(port);

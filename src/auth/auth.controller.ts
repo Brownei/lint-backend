@@ -113,8 +113,14 @@ export class AuthController {
 
   @Get('user')
   @UseGuards(FirebaseAuthGuard)
-  async getUserInfo(@Req() req, @Res() res: Response) {
-    const accessToken = req.cookies.session;
+  async getUserInfo(@Req() req: Request, @Res() res: Response) {
+    let accessToken: string;
+    const [type, token] = req.headers.authorization?.split(' ') ?? [];
+    if (!token) return false;
+
+    if (type === 'Bearer') {
+      accessToken = token;
+    }
     try {
       const accessedUser = await this.authService.verifyToken(accessToken);
       console.log('accessedUser', accessedUser);
@@ -134,7 +140,14 @@ export class AuthController {
   @UseGuards(FirebaseAuthGuard)
   async logout(@Res({ passthrough: true }) res: Response, @Req() req: Request) {
     try {
-      const accessToken = req.cookies.session as string | undefined | null;
+      let accessToken: string;
+      const [type, token] = req.headers.authorization?.split(' ') ?? [];
+      if (type === 'Bearer') {
+        accessToken = token;
+      }
+      if (!accessToken) {
+        throw new UnauthorizedException('No access token!');
+      }
 
       if (!accessToken) {
         throw new UnauthorizedException('No access token!');
