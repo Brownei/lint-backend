@@ -43,4 +43,10 @@ export class ProfileController {
   ) {
     return await this.profileService.getProfileThroughId(profileId, userId);
   }
+
+  @Get('/me')
+  @UseGuards(FirebaseAuthGuard)
+  async getProfileThroughEmail(@CurrentUser('email') email: string) {
+    return await this.profileService.getProfileThroughUserEmail(email);
+  }
 }

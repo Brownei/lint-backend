@@ -26,13 +26,15 @@ export class ProfileService {
     } else if (!currentUser) {
       throw new UnauthorizedException();
     } else {
-      await prisma.profile.create({
+      const newProfile = await prisma.profile.create({
         data: {
           ...profileDTO,
           links: profileDTO.links.map((li) => li),
           userId: currentUser.id,
         },
       });
+
+      return newProfile;
     }
   }
 
@@ -100,6 +102,16 @@ export class ProfileService {
     const currentProfile = await prisma.profile.findUnique({
       where: {
         userId: currentUser.id,
+      },
+    });
+
+    return currentProfile;
+  }
+
+  async getSomeoneProfileThroughId(id: number) {
+    const currentProfile = await prisma.profile.findUnique({
+      where: {
+        id,
       },
     });
 

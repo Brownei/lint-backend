@@ -124,7 +124,6 @@ export class AuthController {
     try {
       const accessedUser = await this.authService.verifyToken(accessToken);
       console.log('accessedUser', accessedUser);
-      // const user = await this.authService.getUserInfo(accessedUser.email);
       res.send(accessedUser);
     } catch (error) {
       if (error instanceof Error) {

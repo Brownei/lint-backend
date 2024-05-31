@@ -10,6 +10,7 @@ import { UsersService } from '../users/services/users.service';
 import { PostNotFoundException } from './exceptions/PostNotFoundException';
 import { prisma } from '../prisma.module';
 import { ProfileService } from '../users/services/profile.service';
+import { pusher } from 'src/pusher.module';
 
 @Injectable()
 export class PostsService {
@@ -23,14 +24,20 @@ export class PostsService {
     const profile = await this.profileService.getProfileThroughUserEmail(email);
     if (!profile) throw new UnauthorizedException();
 
-    await prisma.post.create({
+    const newPost = await prisma.post.create({
       data: {
         description: createPostDto.description,
         toolsTags: createPostDto.toolsTags.map((tags) => tags),
         title: createPostDto.title,
         profileId: profile.id as number,
       },
+      include: {
+        profile: true,
+        requests: true,
+      },
     });
+
+    await pusher.trigger('posts', 'all-posts', newPost);
 
     return new HttpException('Created', HttpStatus.CREATED);
   }

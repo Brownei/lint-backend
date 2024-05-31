@@ -8,6 +8,7 @@ import { CollaboratorNotFoundException } from './exceptions/CollaboratorNotFound
 import { NotCollaboratingException } from './exceptions/NotCollaborating';
 import { DeleteCollaboratorException } from './exceptions/DeleteCollaborator';
 import { prisma } from '../prisma.module';
+import { pusher } from '../pusher.module';
 
 @Injectable()
 export class CollaboratorsService {
@@ -22,11 +23,15 @@ export class CollaboratorsService {
     if (activelyCollaborating)
       throw new ConflictException('You guys are currently collaborating');
 
-    await prisma.collaborators.create({
+    const collaborators = await prisma.collaborators.create({
       data: {
         receiverId,
         senderId,
       },
+    });
+
+    pusher.trigger('collaborators', 'new-collaborator', {
+      message: JSON.stringify(collaborators),
     });
 
     return new HttpException('Created', HttpStatus.CREATED);

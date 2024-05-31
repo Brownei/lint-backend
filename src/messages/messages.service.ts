@@ -10,6 +10,7 @@ import { MessageException } from './exceptions/MessageException';
 import { prisma } from '../prisma.module';
 import { Conversation, Message } from '@prisma/client';
 import { SuccessSentException } from '../exceptions/SuccessExceptions';
+import { pusher } from 'src/pusher.module';
 
 @Injectable()
 export class MessagesService {
@@ -47,7 +48,7 @@ export class MessagesService {
     if (creatorId !== userId && recipientId !== userId)
       throw new MessageException('Cannot Create Message');
 
-    await prisma.message.create({
+    const newMessage = await prisma.message.create({
       data: {
         content: createMessageDto.content,
         attachments: {
@@ -60,6 +61,10 @@ export class MessagesService {
         creatorId: user.id,
         conversationId,
       },
+    });
+
+    pusher.trigger('collaborator-request', 'reject', {
+      message: JSON.stringify(newMessage),
     });
 
     return new SuccessSentException();
@@ -102,12 +107,13 @@ export class MessagesService {
     if (!message) throw new MessageException('Cannot Delete Message');
     if (
       conversation.messages.some((lastMessage) => lastMessage.id !== message.id)
-    )
+    ) {
       return await prisma.message.delete({
         where: {
           id: message.id,
         },
       });
+    }
 
     return this.deleteLastMessage(conversation, message, userId);
   }
