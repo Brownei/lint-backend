@@ -22,7 +22,14 @@ async function server() {
 
   app.setGlobalPrefix('/api');
 
-  app.enableCors();
+  app.enableCors({
+    origin: [
+      'https://lint-app-five.vercel.app',
+      'http://localhost:5173',
+      'http://localhost:5174',
+    ],
+    credentials: true,
+  });
 
   await app.listen(port);
   Logger.log(
