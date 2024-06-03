@@ -22,7 +22,17 @@ async function server() {
 
   app.setGlobalPrefix('/api');
 
-  app.enableCors();
+  app.enableCors({
+    origin: [
+      'https://lint.onrender.com',
+      'https://lint-app-five.vercel.app',
+      /\.onrender\.com$/,
+      /\.vercel\.app$/,
+    ],
+    credentials: true,
+    preflightContinue: false,
+    optionsSuccessStatus: 204,
+  });
 
   await app.listen(port);
   Logger.log(
