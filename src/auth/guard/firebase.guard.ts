@@ -48,8 +48,6 @@ export class FirebaseAuthGuard implements CanActivate {
         .auth()
         .verifySessionCookie(sessionCookie);
 
-      // console.log(decodedClaims);
-
       if (!decodedClaims) return false;
 
       request.user = {

@@ -6,33 +6,28 @@ import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 // import cookieParser from 'cookie-parser';
 
 async function server() {
+  const app = await NestFactory.create(AppModule);
   const docsRoute = 'docs';
   const port = process.env.APP_PORT || 3000;
-  const app = await NestFactory.create(AppModule);
 
   const config = new DocumentBuilder()
     .setTitle('LinT Api')
     .setDescription('The backend service for LinT')
     .setVersion('1.0')
     .build();
+
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup(docsRoute, app, document);
 
-  app.useGlobalPipes(new ValidationPipe());
+  app.useGlobalPipes(
+    new ValidationPipe({
+      transform: true,
+      whitelist: true,
+      forbidNonWhitelisted: true,
+    }),
+  );
 
-  app.setGlobalPrefix('/api');
-
-  app.enableCors({
-    origin: [
-      'https://lint.onrender.com',
-      'https://lint-app-five.vercel.app',
-      /\.onrender\.com$/,
-      /\.vercel\.app$/,
-    ],
-    credentials: true,
-    preflightContinue: false,
-    optionsSuccessStatus: 204,
-  });
+  app.enableCors();
 
   await app.listen(port);
   Logger.log(
@@ -40,4 +35,5 @@ async function server() {
   );
   Logger.log('Application started on: ' + 'http://localhost:' + port);
 }
+
 server();
