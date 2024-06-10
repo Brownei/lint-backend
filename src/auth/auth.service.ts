@@ -21,8 +21,6 @@ export class AuthService {
   }> {
     const decodedToken = await admin.auth().verifyIdToken(accessToken);
 
-    console.log(decodedToken);
-
     const userInfo = await prisma.user.findUnique({
       where: {
         email: decodedToken.email,
@@ -44,13 +42,43 @@ export class AuthService {
     return { decodedToken, userInfo };
   }
 
+  async verifyandUpdateUserWithEmailAndPassword(accessToken: string) {
+    const decodedToken = await admin.auth().verifyIdToken(accessToken);
+
+    if (!decodedToken) {
+      throw new UnauthorizedException();
+    }
+
+    console.log(decodedToken);
+
+    // const userInfo = await prisma.user.findUnique({
+    //   where: {
+    //     email: decodedToken.email,
+    //   },
+    //   select: {
+    //     email: true,
+    //     emailVerified: true,
+    //     fullName: true,
+    //     id: true,
+    //     profile: true,
+    //     profileImage: true,
+    //     password: true,
+    //   },
+    // });
+
+    // if (!userInfo) {
+    //   throw new UserNotFoundException();
+    // }
+
+    // if (userInfo.password !== decodedToken.)
+
+    return decodedToken;
+  }
   async verifyAndCreateUser(accessToken: string): Promise<{
     decodedToken: DecodedIdToken;
     userInfo: UserReturns;
   }> {
     const decodedToken = await admin.auth().verifyIdToken(accessToken);
-
-    console.log(decodedToken);
 
     const userInfo = await prisma.user.findUnique({
       where: {

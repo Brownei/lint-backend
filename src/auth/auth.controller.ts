@@ -11,6 +11,7 @@ import {
   NotAcceptableException,
   HttpException,
   UseGuards,
+  Body,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { Response, Request } from 'express';
@@ -58,6 +59,37 @@ export class AuthController {
       };
 
       res.send(payload);
+    } catch (error) {
+      if (error instanceof Error) {
+        console.log(error);
+        throw new UnauthorizedException('Major error cannot explain');
+      }
+      this.logger.error(error);
+      throw new NotAcceptableException();
+    }
+  }
+
+  @Public()
+  @UseGuards(FirebaseAuthGuard)
+  @Post('login')
+  async loginWithEmailAndPassword(
+    @Req() req: Request,
+    // @Res() res: Response,
+    // @Body() loginDetails,
+  ) {
+    let accessToken: string;
+    const [type, token] = req.headers.authorization?.split(' ') ?? [];
+    if (type === 'Bearer') {
+      accessToken = token;
+    }
+    if (!accessToken) {
+      throw new UnauthorizedException('No access token!');
+    }
+
+    try {
+      return await this.authService.verifyandUpdateUserWithEmailAndPassword(
+        accessToken,
+      );
     } catch (error) {
       if (error instanceof Error) {
         console.log(error);
