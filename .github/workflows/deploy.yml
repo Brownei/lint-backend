@@ -27,22 +27,25 @@ jobs:
 
     deploy:
         needs: build
-        runs-on: ubuntu-latest
+        runs-on: self-hosted 
         steps:
-            -   name: Install SSH key
-                uses: webfactory/ssh-agent@v0.9.0
-                with:
-                    ssh-private-key: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
+            -   name: Pull image from Docker Hub
+                run: docker pull brownei/lint-backend:latest
 
-            -   name: Deploy to EC2
-                run: |
-                    ssh -o StrictHostKeyChecking=no ec2-user@ec2-107-22-133-44.compute-1.amazonaws.com \\
-                    'if sudo docker ps -q --filter "status=running" | grep -q .; then \\
-                        sudo docker stop $(sudo docker ps -q --filter "status=running"); \\
-                    fi && \\
-                    if sudo docker ps -a -q | grep -q .; then \\
-                        sudo docker rm $(sudo docker ps -a -q); \\
-                    fi && \\
-                    sudo docker pull brownei/lint-backend && \\
-                    sudo docker run -d -p 3131:3131 brownei/lint-backend && \\
-                    sudo docker image prune -f'
+            -   name: Copy .env file to server
+                uses: actions/upload-artifact@v3
+                with:
+                    name: env-file
+                    path: .env
+
+            -   name: Download .env file on server
+                uses: actions/download-artifact@v3
+                with:
+                    name: env-file
+                    path: /home/ec2-user/
+
+            -   name: Delete old container
+                run: docker rm -f lint-api  
+
+            -   name: Run Docker Container
+                run: docker run --env-file /home/ec2-user/.env -d -p 3131:3131 --name lint-api brownei/lint-backend
