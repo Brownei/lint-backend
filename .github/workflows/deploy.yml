@@ -1,4 +1,4 @@
-name: Lint-api
+name: Deploy CI
 
 on:
     workflow_dispatch:
@@ -11,4 +11,4 @@ jobs:
             -   name: Checkout Repository
                 uses: actions/checkout@v4
             -   name: Build Docker Image
-                run: docker build -t Brownei/lint-backend .
+                run: docker build -t brownei/lint-backend .
