@@ -36,15 +36,13 @@ jobs:
 
             -   name: Deploy to EC2
                 run: |
-                    scp -o StrictHostKeyChecking=no .env ec2-user@ec2-107-22-133-44.compute-1.amazonaws.com:/home/ec2-user/.env
-                    ssh -o StrictHostKeyChecking=no ec2-user@ec2-107-22-133-44.compute-1.amazonaws.com << 'EOF'
-                    if sudo docker ps -q --filter "status=running" | grep -q .; then
-                        sudo docker stop $(sudo docker ps -q --filter "status=running")
-                    fi
-                    if sudo docker ps -a -q | grep -q .; then
-                        sudo docker rm $(sudo docker ps -a -q)
-                    fi
-                    sudo docker pull brownei/lint-backend
-                    sudo docker run --env-file /home/ec2-user/.env -d -p 3131:3131 brownei/lint-backend
-                    sudo docker image prune -f
-                    EOF
+                    ssh -o StrictHostKeyChecking=no ec2-user@ec2-107-22-133-44.compute-1.amazonaws.com \\
+                    'if sudo docker ps -q --filter "status=running" | grep -q .; then \\
+                        sudo docker stop $(sudo docker ps -q --filter "status=running"); \\
+                    fi && \\
+                    if sudo docker ps -a -q | grep -q .; then \\
+                        sudo docker rm $(sudo docker ps -a -q); \\
+                    fi && \\
+                    sudo docker pull brownei/lint-backend && \\
+                    sudo docker run -d -p 3131:3131 brownei/lint-backend && \\
+                    sudo docker image prune -f'
