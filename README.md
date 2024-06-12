@@ -77,7 +77,7 @@ Nest is [MIT licensed](LICENSE).
 
 ```bash
 # Build the docker image
-$ docker build -t nest-app
+$ docker build -t nest-app .
 
 # Run the docker image
 $ docker run -p 3000:3000 nest-app
