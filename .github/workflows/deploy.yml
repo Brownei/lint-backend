@@ -1,6 +1,8 @@
 name: Docker Build and Deploy
 on:
-    workflow_dispatch:
+    push:
+        branches:
+            - main
 jobs:
     build:
         runs-on: ubuntu-latest
@@ -13,12 +15,6 @@ jobs:
                 with:
                     node-version: '18'
                     cache: 'npm'
-            
-            -   name: Install Dependencies
-                run: npm install
-
-            -   name: Build NestJS Application
-                run: npm run build
 
             -   name: Deploy to Server
                 uses: easingthemes/ssh-deploy@main
@@ -51,13 +47,13 @@ jobs:
                         
 
                         # Stop and remove existing container
-                        sudo docker ps -q --filter "name=lint_api" | grep -q . && sudo docker stop lint_api && sudo docker rm lint_api || true
+                        docker ps -q --filter "name=lint_api" | grep -q . && docker stop lint_api && docker rm lint_api || true
 
                         # Remove old Docker image
-                        sudo docker images -q lint_api:latest | grep -q . && sudo docker rmi lint_api:latest || true
+                        docker images -q lint_api:latest | grep -q . && docker rmi lint_api:latest || true
 
                         # Build Docker image
-                        sudo docker build --no-cache -t lint_api:latest .
+                        docker build --no-cache -t lint_api:latest .
 
                         # Run the newly built Docker image
-                        sudo docker run -d --name lint_api -p 3131:3131 lint_api:latest
+                        docker run -d --name lint_api -p 3131:3131 lint_api:latest
