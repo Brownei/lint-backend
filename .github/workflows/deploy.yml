@@ -28,21 +28,6 @@ jobs:
                     # REMOTE_USER: ${{ secrets.USERNAME }}
         
                     SCRIPT_AFTER: |
-                        rm .env && touch .env
-                        echo "APP_PORT=3131" >> ".env"
-                        echo "DATABASE_URL=${{ secrets.DATABASE_URL }}" >> ".env"
-                        echo "JWT_SECRET=${{ secrets.JWT_SECRET }}" >> ".env"
-                        echo "CLIENT_APP_URL=${{ secrets.CLIENT_CALLBACK_URL }}" >> ".env"
-                        echo "GOOGLE_API_BASE_URL=${{ secrets.CLIENT_SECRET }}" >> ".env"
-                        echo "GOOGLE_CLIENT_ID=${{ secrets.CLIENT_ID }}" >> ".env"
-                        echo "GOOGLE_CLIENT_SECRET=${{ secrets.NODE_ENV }}" >> ".env"
-                        echo "GOOGLE_CLIENT_SECRET=${{ secrets.FIREBASE_PRIVATE_KEY }}" >> ".env"
-                        echo "GOOGLE_CLIENT_SECRET=${{ secrets.FIREBASE_CLIENT_EMAIL }}" >> ".env"
-                        echo "GOOGLE_CLIENT_SECRET=${{ secrets.FIREBASE_PROJECT_ID }}" >> ".env"
-                        echo "GOOGLE_CLIENT_SECRET=${{ secrets.PUSHER_APP_ID }}" >> ".env"
-                        echo "GOOGLE_CLIENT_SECRET=${{ secrets.PUSHER_KEY }}" >> ".env"
-                        echo "GOOGLE_CLIENT_SECRET=${{ secrets.PUSHER_SECRET }}" >> ".env"
-                        echo "GOOGLE_CLIENT_SECRET=${{ secrets.PUSHER_CLUSTER }}" >> ".env"
 
                         # Stop and remove existing container
                         CONTAINER_NAME="lint_api"
