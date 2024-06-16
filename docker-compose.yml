@@ -2,10 +2,13 @@ version: '3.7'
 
 services:
   app:
-    build: .
-    container_name: app
-    ports:
-      - "3000:3000"
+    image: lint_app:latest
+    container_name: lint_app
+    restart: unless-stopped
+    expose:
+      - 3131
+    networks:
+      - caddy_net
 
   caddy:
     image: caddy:latest
