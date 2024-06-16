@@ -1,7 +1,7 @@
 version: '3.7'
 
 services:
-  app:
+  lint_app:
     image: lint_app:latest
     container_name: lint_app
     restart: unless-stopped
