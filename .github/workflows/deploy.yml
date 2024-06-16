@@ -22,8 +22,8 @@ jobs:
                     DATABASE_URL: ${{ secrets.DATABASE_URL }}
                 with:
                     SSH_PRIVATE_KEY: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
-                    REMOTE_HOST: ec2-3-88-158-40.compute-1.amazonaws.com
-                    REMOTE_USER: ubuntu
+                    REMOTE_HOST: ec2-3-88-41-165.compute-1.amazonaws.com
+                    REMOTE_USER: ec2-user
                     # REMOTE_HOST: ${{ secrets.HOST_DNS }}
                     # REMOTE_USER: ${{ secrets.USERNAME }}
         
@@ -31,21 +31,21 @@ jobs:
 
                         # Stop and remove existing container
                         CONTAINER_NAME="lint_api"
-                        container_id=$(sudo docker ps -q --filter "name=$CONTAINER_NAME")
+                        container_id=$(docker ps -aq --filter "name=$CONTAINER_NAME")
                         if [ -n "$container_id" ]; then
                             echo "Container with name '$CONTAINER_NAME' found. Stopping and removing the container..."
-                            sudo docker stop $container_id
-                            sudo docker rm $container_id
+                            docker stop $container_id
+                            docker rm $container_id
                             echo "Container '$CONTAINER_NAME' has been stopped and removed."
                         else
                             echo "No container with name '$CONTAINER_NAME' found."
                         fi
 
                         # Remove old Docker image
-                        sudo docker images -q lint_api:latest | grep -q . && sudo docker rmi --force lint_api:latest || true
+                        docker images -q lint_api:latest | grep -q . && docker rmi --force lint_api:latest || true
 
                         # Build Docker image
-                        sudo docker build --no-cache -t lint_api:latest .
+                        docker build --no-cache -t lint_api:latest .
 
                         # Run the newly built Docker image
-                        sudo docker run -d --name lint_api -p 3131:3131 lint_api:latest
+                        docker run -d --name lint_api -p 3131:3131 lint_api:latest
