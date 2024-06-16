@@ -1,0 +1,3 @@
+api.lintapp.com {
+	reverse_proxy localhost:3131
+}
