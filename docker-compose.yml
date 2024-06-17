@@ -1,7 +1,7 @@
 services:
-  lint_app:
-    image: lint_app:latest
-    container_name: lint_app
+  lint_api:
+    image: lint_api:latest
+    container_name: lint_api
     restart: unless-stopped
     expose:
       - 3131
