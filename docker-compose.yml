@@ -1,7 +1,6 @@
 services:
   lint_api:
-    image: lint_api:latest
-    container_name: lint_api
+    image: ghcr.io/brownei/lint_api:latest
     restart: unless-stopped
     expose:
       - 3131
@@ -11,7 +10,6 @@ services:
   caddy:
     image: caddy:latest
     container_name: caddy
-    restart: always
     ports:
       - "80:80"
       - "443:443"
