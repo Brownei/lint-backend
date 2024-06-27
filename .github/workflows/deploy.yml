@@ -30,22 +30,38 @@ jobs:
                     SCRIPT_AFTER: |
 
                         # Stop and remove existing container
-                        CONTAINER_NAME="lint_api"
-                        container_id=$(docker ps -aq --filter "name=$CONTAINER_NAME")
-                        if [ -n "$container_id" ]; then
+                        remove_container() {
+                          local CONTAINER_NAME=$1
+                          local container_id=$(docker ps -aq --filter "name=$CONTAINER_NAME")
+                          if [ -n "$container_id" ]; then
                             echo "Container with name '$CONTAINER_NAME' found. Stopping and removing the container..."
                             docker stop $container_id
                             docker rm $container_id
                             echo "Container '$CONTAINER_NAME' has been stopped and removed."
-                        else
+                          else
                             echo "No container with name '$CONTAINER_NAME' found."
-                        fi
+                          fi
+                        }
 
-                        # Remove old Docker image
-                        docker images -q lint_api:latest | grep -q . && docker rmi --force lint_api:latest || true
+                        # Function to remove a Docker image by name
+                        remove_image() {
+                          local IMAGE_NAME=$1
+                          docker images -q $IMAGE_NAME | grep -q . && docker rmi --force $IMAGE_NAME || true
+                        }
 
-                        # Build Docker image
-                        docker build --no-cache -t lint_api:latest .
+                        # Remove lint_api container and image
+                        remove_container "lint_api"
+                        remove_image "lint_api:latest"
 
-                        # Run the newly built Docker image
-                        docker run -d --name lint_api -p 3131:3131 lint_api:latest
+                        # Remove caddy container and image
+                        remove_container "caddy"
+                        remove_image "caddy:latest"
+
+                        # Run docker-compose down with volumes
+                        docker-compose down --volumes
+
+                        # Run docker-compose up
+                        docker-compose up
+
+
+

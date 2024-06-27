@@ -6,7 +6,7 @@ import { UserNotFoundException } from '../exceptions/UserNotFound';
 
 @Injectable()
 export class ProfileService {
-  constructor() {}
+  constructor() { }
 
   async createProfile(profileDTO: CreateProfileDto, email: string) {
     const existingProfile = await prisma.profile.findUnique({
@@ -74,7 +74,7 @@ export class ProfileService {
         },
       });
 
-      if (!currentProfile || !currentUser) throw new UserNotFoundException();
+      if (!currentProfile) throw new UserNotFoundException();
 
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { userId, ...otherDetails } = currentProfile;

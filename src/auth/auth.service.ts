@@ -13,7 +13,7 @@ import { prisma } from '../prisma.module';
 
 @Injectable()
 export class AuthService {
-  constructor(private readonly userServices: UsersService) {}
+  constructor(private readonly userServices: UsersService) { }
 
   async verifyAndUpdateUser(accessToken: string): Promise<{
     decodedToken: DecodedIdToken;
@@ -74,6 +74,8 @@ export class AuthService {
 
     return decodedToken;
   }
+
+
   async verifyAndCreateUser(accessToken: string): Promise<{
     decodedToken: DecodedIdToken;
     userInfo: UserReturns;

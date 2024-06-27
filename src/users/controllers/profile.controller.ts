@@ -14,7 +14,7 @@ import { FirebaseAuthGuard } from 'src/auth/guard/firebase.guard';
 // import { Public } from 'src/decorators/public.decorator';
 @Controller('profile')
 export class ProfileController {
-  constructor(private readonly profileService: ProfileService) {}
+  constructor(private readonly profileService: ProfileService) { }
 
   @Post()
   @UseGuards(FirebaseAuthGuard)
@@ -25,14 +25,14 @@ export class ProfileController {
     return await this.profileService.createProfile(createProfileDto, email);
   }
 
-  @Get('/:userName')
+  @Get('/:username')
   @UseGuards(FirebaseAuthGuard)
   async getProfile(
     @CurrentUser('email') email: string,
-    @Param('userName') userName: string,
+    @Param('username') username: string,
   ) {
     // console.log(email, userName);
-    return await this.profileService.getProfile(userName, email);
+    return await this.profileService.getProfile(username, email);
   }
 
   @Get('post/:id')
