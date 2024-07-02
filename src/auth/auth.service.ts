@@ -7,9 +7,12 @@ import {
 import { DecodedIdToken } from 'firebase-admin/auth';
 import { admin } from './firebase-admin.module';
 import { UserNotFoundException } from '../users/exceptions/UserNotFound';
-import { UserReturns } from '../utils/types/types';
+import { LoginData, UserReturns } from '../utils/types/types';
 import { UsersService } from '../users/services/users.service';
 import { prisma } from '../prisma.module';
+import { CreateUserDto } from 'src/users/dto/create-user.dto';
+import * as argon2 from 'argon2';
+import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class AuthService {
@@ -42,39 +45,81 @@ export class AuthService {
     return { decodedToken, userInfo };
   }
 
-  async verifyandUpdateUserWithEmailAndPassword(accessToken: string) {
+  async verifyandUpdateUserWithEmailAndPassword(accessToken: string, loginDetails: LoginData) {
     const decodedToken = await admin.auth().verifyIdToken(accessToken);
 
     if (!decodedToken) {
-      throw new UnauthorizedException();
+      throw new ConflictException('check your network!');
     }
 
-    console.log(decodedToken);
+    if (decodedToken.email !== loginDetails.email) throw new ConflictException('You scammer!');
 
-    // const userInfo = await prisma.user.findUnique({
-    //   where: {
-    //     email: decodedToken.email,
-    //   },
-    //   select: {
-    //     email: true,
-    //     emailVerified: true,
-    //     fullName: true,
-    //     id: true,
-    //     profile: true,
-    //     profileImage: true,
-    //     password: true,
-    //   },
-    // });
+    const user = await prisma.user.findUnique({
+      where: {
+        email: loginDetails.email,
+      },
+      select: {
+        id: true,
+        email: true,
+        emailVerified: true,
+        fullName: true,
+        profileImage: true,
+        password: true,
+        profile: true,
+      },
+    });
 
-    // if (!userInfo) {
-    //   throw new UserNotFoundException();
-    // }
+    if (!user) {
+      throw new UserNotFoundException();
+    }
 
-    // if (userInfo.password !== decodedToken.)
+    const passwordMatch = await bcrypt.compare(loginDetails.password, user.password)
 
-    return decodedToken;
+    if (!passwordMatch) throw new UnauthorizedException('Incorrect password')
+
+    const { password, ...userInfo } = user
+    return { decodedToken, userInfo };
   }
 
+
+  async verifyAndCreateUserThroughEmailAndPassword(accessToken: string, createUserDto: CreateUserDto): Promise<{
+    decodedToken: DecodedIdToken;
+    userInfo: UserReturns;
+  }> {
+    const decodedToken = await admin.auth().verifyIdToken(accessToken);
+
+    const userInfo = await prisma.user.findUnique({
+      where: {
+        email: decodedToken.email,
+      },
+      select: {
+        email: true,
+        emailVerified: true,
+        fullName: true,
+        id: true,
+        profile: true,
+        profileImage: true,
+      },
+    });
+
+    if (userInfo) {
+      return { decodedToken, userInfo };
+    }
+
+    const newUser = await this.userServices.createANewUser({
+      email: decodedToken.email,
+      fullName: createUserDto.fullName,
+      profileImage: '',
+      emailVerified: decodedToken.email_verified,
+      password: createUserDto.password
+    });
+
+    await admin.auth().setCustomUserClaims(decodedToken.uid, {
+      userId: newUser.id,
+    });
+
+    return { decodedToken, userInfo: newUser };
+  }
 
   async verifyAndCreateUser(accessToken: string): Promise<{
     decodedToken: DecodedIdToken;

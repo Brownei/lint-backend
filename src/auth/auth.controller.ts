@@ -18,13 +18,15 @@ import { Response, Request } from 'express';
 import { config } from 'dotenv';
 import { Public } from '../decorators/public.decorator';
 import { FirebaseAuthGuard } from './guard/firebase.guard';
+import { CreateUserDto } from 'src/users/dto/create-user.dto';
+import { LoginData } from 'src/utils/types/types';
 
 config();
 
 @Controller('auth')
 export class AuthController {
   private readonly logger = new Logger(AuthController.name);
-  constructor(private readonly authService: AuthService) {}
+  constructor(private readonly authService: AuthService) { }
 
   @Public()
   @UseGuards(FirebaseAuthGuard)
@@ -75,7 +77,7 @@ export class AuthController {
   async loginWithEmailAndPassword(
     @Req() req: Request,
     // @Res() res: Response,
-    // @Body() loginDetails,
+    @Body() loginDetails: LoginData,
   ) {
     let accessToken: string;
     const [type, token] = req.headers.authorization?.split(' ') ?? [];
@@ -85,19 +87,10 @@ export class AuthController {
     if (!accessToken) {
       throw new UnauthorizedException('No access token!');
     }
-
-    try {
-      return await this.authService.verifyandUpdateUserWithEmailAndPassword(
-        accessToken,
-      );
-    } catch (error) {
-      if (error instanceof Error) {
-        console.log(error);
-        throw new UnauthorizedException('Major error cannot explain');
-      }
-      this.logger.error(error);
-      throw new NotAcceptableException();
-    }
+    return await this.authService.verifyandUpdateUserWithEmailAndPassword(
+      accessToken,
+      loginDetails
+    );
   }
 
   @Public()
@@ -112,35 +105,57 @@ export class AuthController {
     if (!accessToken) {
       throw new UnauthorizedException('No access token!');
     }
+    const { userInfo } =
+      await this.authService.verifyAndCreateUser(accessToken);
 
-    try {
-      const { userInfo } =
-        await this.authService.verifyAndCreateUser(accessToken);
+    const { sessionCookie, expiresIn } =
+      await this.authService.createSessionCookie(accessToken);
 
-      const { sessionCookie, expiresIn } =
-        await this.authService.createSessionCookie(accessToken);
+    res.cookie('session', sessionCookie, {
+      maxAge: expiresIn,
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+    });
 
-      res.cookie('session', sessionCookie, {
-        maxAge: expiresIn,
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
-      });
-
-      const payload = {
-        userInfo,
-        sessionCookie,
-      };
-
-      res.send(payload);
-    } catch (error) {
-      if (error instanceof Error) {
-        console.log(error);
-        throw new UnauthorizedException('Major error cannot explain');
-      }
-      this.logger.error(error);
-      throw new NotAcceptableException();
+    const payload = {
+      userInfo,
+      sessionCookie
     }
+
+    res.send(payload);
+  }
+
+  @Public()
+  @UseGuards(FirebaseAuthGuard)
+  @Post('register')
+  async registerWithCredentials(@Req() req: Request, @Res() res: Response, @Body() createUserDto: CreateUserDto) {
+    let accessToken: string;
+    const [type, token] = req.headers.authorization?.split(' ') ?? [];
+    if (type === 'Bearer') {
+      accessToken = token;
+    }
+    if (!accessToken) {
+      throw new UnauthorizedException('No access token!');
+    }
+    const { userInfo } =
+      await this.authService.verifyAndCreateUserThroughEmailAndPassword(accessToken, createUserDto);
+
+    const { sessionCookie, expiresIn } =
+      await this.authService.createSessionCookie(accessToken);
+
+    res.cookie('session', sessionCookie, {
+      maxAge: expiresIn,
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+    });
+
+    const payload = {
+      userInfo,
+      sessionCookie
+    }
+    res.send(payload);
   }
 
   @Get('user')
@@ -153,18 +168,9 @@ export class AuthController {
     if (type === 'Bearer') {
       accessToken = token;
     }
-    try {
-      const accessedUser = await this.authService.verifyToken(accessToken);
-      console.log('accessedUser', accessedUser);
-      res.send(accessedUser);
-    } catch (error) {
-      if (error instanceof Error) {
-        console.log(error);
-        throw new UnauthorizedException();
-      }
-      this.logger.error(error);
-      throw new BadRequestException('Bad request!');
-    }
+
+    const accessedUser = await this.authService.verifyToken(accessToken);
+    res.send(accessedUser);
   }
 
   @Post('logout')
