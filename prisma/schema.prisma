@@ -57,13 +57,6 @@ model Post {
   createdAt   DateTime              @default(now()) @db.Timestamp(6)
 }
 
-// model Link {
-//   id              Int      @id @default(autoincrement())
-//   link            String
-//   profileId       Int
-//   profile         Profile  @relation(fields: [profileId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-// }
-
 model Message {
   id             String               @id @default(uuid())
   content        String
@@ -118,9 +111,4 @@ enum Status {
   accepted
   pending
   rejected
-}
-
-enum Brown {
-  deep
-  heavy
 }
