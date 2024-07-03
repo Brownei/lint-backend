@@ -45,7 +45,10 @@ export class AuthService {
     return { decodedToken, userInfo };
   }
 
-  async verifyandUpdateUserWithEmailAndPassword(accessToken: string, loginDetails: LoginData) {
+  async verifyandUpdateUserWithEmailAndPassword(accessToken: string, loginDetails: LoginData): Promise<{
+    decodedToken: DecodedIdToken;
+    userInfo: UserReturns;
+  }> {
     const decodedToken = await admin.auth().verifyIdToken(accessToken);
 
     if (!decodedToken) {
@@ -77,8 +80,8 @@ export class AuthService {
 
     if (!passwordMatch) throw new UnauthorizedException('Incorrect password')
 
-    const { password, ...userInfo } = user
-    return { decodedToken, userInfo };
+    const { password, ...otherDetails } = user
+    return { decodedToken, userInfo: otherDetails };
   }
 
 

@@ -76,7 +76,7 @@ export class AuthController {
   @Post('login')
   async loginWithEmailAndPassword(
     @Req() req: Request,
-    // @Res() res: Response,
+    @Res() res: Response,
     @Body() loginDetails: LoginData,
   ) {
     let accessToken: string;
@@ -87,10 +87,27 @@ export class AuthController {
     if (!accessToken) {
       throw new UnauthorizedException('No access token!');
     }
-    return await this.authService.verifyandUpdateUserWithEmailAndPassword(
+    const { userInfo } = await this.authService.verifyandUpdateUserWithEmailAndPassword(
       accessToken,
       loginDetails
     );
+
+
+    const { sessionCookie, expiresIn } = await this.authService.createSessionCookie(accessToken)
+
+    res.cookie('session', sessionCookie, {
+      maxAge: expiresIn,
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+    });
+
+    const payload = {
+      userInfo,
+      sessionCookie,
+    };
+
+    res.send(payload);
   }
 
   @Public()
