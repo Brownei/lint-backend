@@ -19,7 +19,7 @@ export type ReqWithUser = Request & {
 
 @Injectable()
 export class FirebaseAuthGuard implements CanActivate {
-  constructor(private reflector: Reflector) {}
+  constructor(private reflector: Reflector) { }
   logger = new Logger();
 
   public async canActivate(context: ExecutionContext): Promise<boolean> {

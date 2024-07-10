@@ -4,8 +4,8 @@ import {
   Param,
   Get,
   Body,
-  ParseIntPipe,
   UseGuards,
+  ParseUUIDPipe,
 } from '@nestjs/common';
 import { ProfileService } from '../services/profile.service';
 import { CurrentUser } from '../../auth/guard/auth.guard';
@@ -39,7 +39,7 @@ export class ProfileController {
   @UseGuards(FirebaseAuthGuard)
   async getProfileThroughId(
     @CurrentUser('id') userId: number,
-    @Param('id', ParseIntPipe) profileId: number,
+    @Param('id', ParseUUIDPipe) profileId: number,
   ) {
     return await this.profileService.getProfileThroughId(profileId, userId);
   }

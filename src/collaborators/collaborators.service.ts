@@ -3,6 +3,7 @@ import {
   HttpException,
   HttpStatus,
   Injectable,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { CollaboratorNotFoundException } from './exceptions/CollaboratorNotFound';
 import { NotCollaboratingException } from './exceptions/NotCollaborating';
@@ -12,7 +13,7 @@ import { pusher } from '../pusher.module';
 
 @Injectable()
 export class CollaboratorsService {
-  constructor() {}
+  constructor() { }
 
   async createCollaborators(senderId: number, receiverId: number) {
     const activelyCollaborating = this.isCurrentlyCollaborating(
@@ -37,7 +38,15 @@ export class CollaboratorsService {
     return new HttpException('Created', HttpStatus.CREATED);
   }
 
-  async getAllCollaborators(id: number) {
+  async getAllCollaborators(email: string) {
+    const { id } = await prisma.user.findUnique({
+      where: {
+        email
+      }
+    })
+
+    if (!id) throw new UnauthorizedException('No access');
+
     return await prisma.collaborators.findMany({
       where: {
         OR: [
@@ -78,7 +87,15 @@ export class CollaboratorsService {
     return collaborator;
   }
 
-  async deleteCollaborator(id: number, userId: number) {
+  async deleteCollaborator(id: number, email: string) {
+    const { id: userId } = await prisma.user.findUnique({
+      where: {
+        email
+      }
+    })
+
+    if (!userId) throw new UnauthorizedException('No access');
+
     const collaborator = await this.findCollaboratorById(id);
     if (!collaborator) throw new CollaboratorNotFoundException();
     if (collaborator.receiverId !== userId || collaborator.senderId !== userId)
