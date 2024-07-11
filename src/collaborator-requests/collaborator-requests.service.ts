@@ -28,7 +28,7 @@ export class CollaboratorRequestService {
     private readonly collaboratorService: CollaboratorsService,
     @Inject(ProfileService)
     private readonly profileService: ProfileService,
-  ) {}
+  ) { }
 
   async isPending(userId: number, postId: string, receiverId: number) {
     return await prisma.collaboratorRequest.findFirst({
@@ -42,7 +42,7 @@ export class CollaboratorRequestService {
   }
 
   async findById(id: string) {
-    return await prisma.collaboratorRequest.findFirst({
+    const request = await prisma.collaboratorRequest.findFirst({
       where: {
         id,
       },
@@ -54,6 +54,10 @@ export class CollaboratorRequestService {
         sender: true,
       },
     });
+
+    if (!request) throw new CollaboratorException('Request not found');
+
+    return request;
   }
 
   async getCollaboratorRequestsSent(email: string) {

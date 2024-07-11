@@ -24,7 +24,7 @@ export class CollaboratorRequestController {
     private readonly collaboratorRequestService: CollaboratorRequestService,
     private readonly userService: UsersService,
     private readonly postService: PostsService,
-  ) {}
+  ) { }
 
   @Get('sent')
   @UseGuards(FirebaseAuthGuard)
@@ -64,6 +64,12 @@ export class CollaboratorRequestController {
     const payload = { sender, receiver, postInterested };
     console.log(payload);
     return response;
+  }
+
+  @Get(':id')
+  @UseGuards(FirebaseAuthGuard)
+  async getASingleInterest(@Param('id') id: string) {
+    return await this.collaboratorRequestService.findById(id)
   }
 
   @Delete(':id/cancel')
