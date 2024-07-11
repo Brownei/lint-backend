@@ -66,11 +66,18 @@ export class CollaboratorRequestController {
     return response;
   }
 
-  @Get(':id')
+  @Get('sent/:id')
   @UseGuards(FirebaseAuthGuard)
-  async getASingleInterest(@Param('id') id: string) {
-    return await this.collaboratorRequestService.findById(id)
+  async getASingleInterestSent(@Param('id') id: string, @CurrentUser('email') email: string) {
+    return await this.collaboratorRequestService.findSentRequestById(id, email)
   }
+
+  @Get('received/:id')
+  @UseGuards(FirebaseAuthGuard)
+  async getASingleInterestReceived(@Param('id') id: string, @CurrentUser('email') email: string) {
+    return await this.collaboratorRequestService.findReceivedRequestById(id, email)
+  }
+
 
   @Delete(':id/cancel')
   @UseGuards(FirebaseAuthGuard)

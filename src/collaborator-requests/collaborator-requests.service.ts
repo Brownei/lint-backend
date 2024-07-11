@@ -41,10 +41,17 @@ export class CollaboratorRequestService {
     });
   }
 
-  async findById(id: string) {
+  async findSentRequestById(id: string, email: string) {
+    const user = await prisma.user.findUnique({
+      where: {
+        email,
+      },
+    });
+
     const request = await prisma.collaboratorRequest.findFirst({
       where: {
         id,
+        senderId: user.id
       },
       select: {
         id: true,
@@ -58,6 +65,49 @@ export class CollaboratorRequestService {
     if (!request) throw new CollaboratorException('Request not found');
 
     return request;
+  }
+
+  async findById(id: string) {
+    return await prisma.collaboratorRequest.findFirst({
+      where: {
+        id,
+      },
+      select: {
+        id: true,
+        status: true,
+        post: true,
+        receiver: true,
+        sender: true,
+      },
+    });
+
+  }
+
+  async findReceivedRequestById(id: string, email: string) {
+    const user = await prisma.user.findUnique({
+      where: {
+        email,
+      },
+    });
+
+    const request = await prisma.collaboratorRequest.findFirst({
+      where: {
+        id,
+        receiverId: user.id
+      },
+      select: {
+        id: true,
+        status: true,
+        post: true,
+        receiver: true,
+        sender: true,
+      },
+    });
+
+    if (!request) throw new CollaboratorException('Request not found');
+
+    return request;
+
   }
 
   async getCollaboratorRequestsSent(email: string) {
