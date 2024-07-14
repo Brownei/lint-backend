@@ -22,7 +22,7 @@ jobs:
                     DATABASE_URL: ${{ secrets.DATABASE_URL }}
                 with:
                     SSH_PRIVATE_KEY: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
-                    REMOTE_HOST: ec2-52-91-88-184.compute-1.amazonaws.com
+                    REMOTE_HOST: ec2-34-235-123-202.compute-1.amazonaws.com 
                     REMOTE_USER: ec2-user
                     # REMOTE_HOST: ${{ secrets.HOST_DNS }}
                     # REMOTE_USER: ${{ secrets.USERNAME }}
