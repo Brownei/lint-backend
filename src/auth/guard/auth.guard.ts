@@ -1,16 +1,16 @@
 /* eslint-disable prettier/prettier */
 import {
-    ExecutionContext,
-    UnauthorizedException,
-    createParamDecorator,
+  ExecutionContext,
+  UnauthorizedException,
+  createParamDecorator,
 } from '@nestjs/common';
 
 export const CurrentUser = createParamDecorator((data: any, ctx: ExecutionContext) => {
-    const request = ctx.switchToHttp().getRequest();
+  const request = ctx.switchToHttp().getRequest();
 
-    if (!!request.user) {
-        return !!data ? request.user[data] : request.user;
-    }
+  if (!!request.user) {
+    return !!data ? request.user[data] : request.user;
+  }
 
-    throw new UnauthorizedException()
+  return new UnauthorizedException()
 });

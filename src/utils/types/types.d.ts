@@ -2,71 +2,114 @@
 import { Request } from '@nestjs/common';
 import { User } from '../typeorm';
 import { Socket } from 'socket.io';
-import { Profile } from '@prisma/client';
+import { CollaboratorRequest, Post, Profile, Status } from '@prisma/client';
 
 export interface HTTPRequest extends Request {
-    user: UserDetails;
+  user: UserDetails;
 }
 
 export interface LoginData {
-    email: string;
-    password: string;
+  email: string;
+  password: string;
 }
 
 export interface UserDetails {
-    firstName: string;
-    lastName: string;
-    email: string;
-    profileImage: string;
+  fullName: string;
+  id: number;
+  email: string;
+  profileImage: string;
 }
 
 export type UserReturns = {
-    id: number;
-    fullName: string;
-    email: string;
-    emailVerified: boolean;
-    profileImage: string;
-    profile: Profile;
+  id: number;
+  fullName: string;
+  email: string;
+  emailVerified: boolean;
+  profileImage: string;
+  profile: Profile;
 }
 
-export type PostReturns = {
-    id: number,
+export type ProfileReturns = {
+  id: number;
+  username: string;
+  fullName: string;
+  occupation: string;
+  location: string;
+  bio: string;
+}
+
+export type CollaboratorsReturns = {
+  receiver: {
+    profileImage: string,
+    fullName: string,
+    occupation: string
+  }
+  sender: {
+    profileImage: string,
+    fullName: string,
+    occupation: string
+  }
+}
+
+export type CollaboratorsRequestReturns = {
+  id: string;
+  status: Status;
+  post: Post;
+  receiver: User;
+  sender: User;
+}
+export type CollaboratorsRequestDetails = {
+  id: string;
+  content: string;
+  createdAt: Date;
+  post: {
+    id: string;
+    title: string;
+    createdAt: Date;
+  };
+  sender: {
+    occupation: string,
+    fullName: string,
+    username: string,
+    profileImage: string,
+  };
+}
+
+export
+
+  export type PostReturns = {
+    id: string,
     title: string,
     description: string,
-    techStacks: string,
-    problem: string,
-    solution: string,
-    requirements: string,
-    isPaid: boolean,
-    user: {
-        id: number,
-        fullName: string,
-        profileImage: string,
-    }
-}
+    toolsTags: string[],
+    profile: Profile,
+    requests: CollaboratorRequest[]
+    createdAt: Date
+  }
 
 export interface AuthenticatedSocket extends Socket {
-    user?: User;
+  user?: User;
 }
 
 
 declare module 'express-session' {
-    interface SessionData {
-        user: {
-            email: number;
-            firstName: string;
-            lastName: string;
-            picture: string;
-            accessToken: string;
-        };
-    }
+  interface SessionData {
+    user: {
+      email: number;
+      firstName: string;
+      lastName: string;
+      picture: string;
+      accessToken: string;
+    };
+  }
 }
 
 declare module 'express' {
-    interface Request {
-        user: {
-            email: string;
-            id: string;
-        };
-    }
+  interface Request {
+    user: {
+      email: string;
+      id: string;
+    };
+  }
 }
+

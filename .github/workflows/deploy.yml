@@ -28,7 +28,7 @@ jobs:
                     # REMOTE_USER: ${{ secrets.USERNAME }}
         
                     SCRIPT_AFTER: |
-                        docker-compose down --volumes
+                        docker compose down --volumes
 
                         # Stop and remove existing container
                         CONTAINER_NAME="lint_api"
@@ -52,4 +52,4 @@ jobs:
                         # docker run -d --name lint_api -p 3131:3131 lint_api:latest
                         #
 
-                        docker-compose up
+                        docker compose up -d

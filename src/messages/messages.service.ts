@@ -1,7 +1,6 @@
 import { HttpException, HttpStatus, Inject, Injectable } from '@nestjs/common';
 import { CreateMessageDto } from './dto/create-message.dto';
 import { ConversationsService } from '../conversations/conversations.service';
-import { MessageAttachmentsService } from '../message-attachments/message-attachments.service';
 import { CollaboratorsService } from '../collaborators/collaborators.service';
 import { ConversationNotFoundException } from '../conversations/exceptions/ConversationNotFoundException';
 import { CollaboratorNotFoundException } from '../collaborators/exceptions/CollaboratorNotFound';
@@ -19,23 +18,26 @@ export class MessagesService {
     private readonly conversationService: ConversationsService,
     @Inject(UsersService)
     private readonly usersService: UsersService,
-    @Inject(MessageAttachmentsService)
-    private readonly messageAttachmentsService: MessageAttachmentsService,
     @Inject(CollaboratorsService)
     private readonly collaboratorsService: CollaboratorsService,
-  ) {}
+  ) { }
 
   async createMessage(
     createMessageDto: CreateMessageDto,
     userId: number,
     conversationId: string,
-  ) {
+  ): Promise<{
+    error?: Error
+    success?: HttpException
+  }> {
     const conversation =
       await this.conversationService.findById(conversationId);
 
-    const user = await this.usersService.findOneUserById(userId);
+    const { user } = await this.usersService.findOneUserById(userId);
 
-    if (!conversation) throw new ConversationNotFoundException();
+    if (!conversation) return {
+      error: new ConversationNotFoundException()
+    }
     const { creatorId, recipientId } = conversation;
 
     const isCurrentlyCollaborating =
@@ -44,9 +46,13 @@ export class MessagesService {
         recipientId,
       );
 
-    if (!isCurrentlyCollaborating) throw new CollaboratorNotFoundException();
+    if (!isCurrentlyCollaborating) return {
+      error: new CollaboratorNotFoundException()
+    }
     if (creatorId !== userId && recipientId !== userId)
-      throw new MessageException('Cannot Create Message');
+      return {
+        error: new MessageException('Cannot Create Message')
+      }
 
     const newMessage = await prisma.message.create({
       data: {
@@ -67,10 +73,12 @@ export class MessagesService {
       message: JSON.stringify(newMessage),
     });
 
-    return new SuccessSentException();
+    return {
+      success: new SuccessSentException()
+    }
   }
 
-  async getMessages(conversationId: string) {
+  async getMessages(conversationId: string): Promise<Message[]> {
     return await prisma.message.findMany({
       where: {
         conversation: {
@@ -92,7 +100,7 @@ export class MessagesService {
       conversationId,
       5,
     );
-    if (!conversation) throw new ConversationNotFoundException();
+    if (!conversation) return new ConversationNotFoundException();
     const message = await prisma.message.findFirst({
       where: {
         id: messageId,
@@ -104,7 +112,7 @@ export class MessagesService {
         },
       },
     });
-    if (!message) throw new MessageException('Cannot Delete Message');
+    if (!message) return new MessageException('Cannot Delete Message');
     if (
       conversation.messages.some((lastMessage) => lastMessage.id !== message.id)
     ) {
@@ -122,7 +130,10 @@ export class MessagesService {
     conversation: Conversation,
     message: Message,
     userId: number,
-  ) {
+  ): Promise<{
+    error?: Error
+    success?: HttpException
+  }> {
     const conversationCreated = await prisma.conversation.findUnique({
       where: {
         id: conversation.id,
@@ -138,9 +149,9 @@ export class MessagesService {
     if (size <= 1) {
       console.log('Last Message Sent is deleted');
       await this.conversationService.update(conversation.id, null, userId);
-      return await prisma.message.delete({
-        where: { id: message.id },
-      });
+      return {
+        success: new HttpException('Deleted', HttpStatus.ACCEPTED)
+      }
     } else {
       console.log('There are more than 1 message');
       const newLastMessage = conversationCreated.messages[SECOND_MESSAGE_INDEX];
@@ -149,10 +160,13 @@ export class MessagesService {
         newLastMessage,
         userId,
       );
-
-      return await prisma.message.delete({
+      await prisma.message.delete({
         where: { id: message.id },
       });
+      return {
+        success: new HttpException('Deleted', HttpStatus.ACCEPTED)
+
+      }
     }
   }
 
@@ -161,7 +175,10 @@ export class MessagesService {
     messageId: string,
     userId: number,
     content: string,
-  ) {
+  ): Promise<{
+    error?: Error
+    success?: HttpException
+  }> {
     const messageDB = await prisma.message.findFirst({
       where: {
         id: messageId,
@@ -171,7 +188,9 @@ export class MessagesService {
       },
     });
     if (!messageDB)
-      throw new HttpException('Cannot Edit Message', HttpStatus.BAD_REQUEST);
+      return {
+        error: new HttpException('Cannot Edit Message', HttpStatus.BAD_REQUEST)
+      }
 
     await prisma.message.update({
       where: {
@@ -183,6 +202,8 @@ export class MessagesService {
       },
     });
 
-    return new HttpException('Edited', HttpStatus.OK);
+    return {
+      success: new HttpException('Edited', HttpStatus.OK)
+    }
   }
 }

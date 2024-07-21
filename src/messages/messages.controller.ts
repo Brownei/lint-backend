@@ -19,7 +19,7 @@ import { FirebaseAuthGuard } from 'src/auth/guard/firebase.guard';
 
 @Controller('conversations/:id/messages')
 export class MessagesController {
-  constructor(private readonly messagesService: MessagesService) {}
+  constructor(private readonly messagesService: MessagesService) { }
 
   @Post()
   @UseGuards(FirebaseAuthGuard)
@@ -29,7 +29,7 @@ export class MessagesController {
     @Body() createMessageDto: CreateMessageDto,
   ) {
     const { content, attachments } = createMessageDto;
-    if (!attachments || !content) throw new EmptyMessageException();
+    if (!attachments || !content) return new EmptyMessageException();
 
     pusher.trigger(
       String(conversationId),

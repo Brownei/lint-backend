@@ -11,6 +11,7 @@ import { PostNotFoundException } from './exceptions/PostNotFoundException';
 import { prisma } from '../prisma.module';
 import { ProfileService } from '../users/services/profile.service';
 import { pusher } from 'src/pusher.module';
+import { PostReturns } from 'src/utils/types/types';
 
 @Injectable()
 export class PostsService {
@@ -19,10 +20,15 @@ export class PostsService {
     private readonly usersService: UsersService,
     @Inject(ProfileService)
     private readonly profileService: ProfileService,
-  ) {}
-  async create(createPostDto: CreatePostDto, email: string) {
-    const profile = await this.profileService.getProfileThroughUserEmail(email);
-    if (!profile) throw new UnauthorizedException();
+  ) { }
+  async create(createPostDto: CreatePostDto, email: string): Promise<{
+    error?: Error
+    success?: HttpException
+  }> {
+    const { profile } = await this.profileService.getProfileThroughUserEmail(email);
+    if (!profile) return {
+      error: new UnauthorizedException()
+    }
 
     const newPost = await prisma.post.create({
       data: {
@@ -39,10 +45,12 @@ export class PostsService {
 
     await pusher.trigger('posts', 'all-posts', newPost);
 
-    return new HttpException('Created', HttpStatus.CREATED);
+    return {
+      success: new HttpException('Created', HttpStatus.CREATED)
+    }
   }
 
-  async findAll() {
+  async findAll(): Promise<PostReturns[]> {
     return await prisma.post.findMany({
       orderBy: {
         createdAt: 'desc',
@@ -59,7 +67,10 @@ export class PostsService {
     });
   }
 
-  async findOne(id: string) {
+  async findOne(id: string): Promise<{
+    error?: Error
+    particularPost?: PostReturns
+  }> {
     const particularPost = await prisma.post.findUnique({
       where: {
         id,
@@ -75,21 +86,30 @@ export class PostsService {
       },
     });
 
-    if (!particularPost) throw new PostNotFoundException();
+    if (!particularPost) return {
+      error: new PostNotFoundException()
+    }
 
-    return particularPost;
+    return {
+      particularPost
+    }
   }
 
-  async findAllPostConcerningAUser(username: string) {
+  async findAllPostConcerningAUser(username: string): Promise<{
+    error?: Error
+    posts?: PostReturns[]
+  }> {
     const profile = await prisma.profile.findUnique({
       where: {
         username,
       },
     });
 
-    if (!profile) throw new UnauthorizedException();
+    if (!profile) return {
+      error: new UnauthorizedException()
+    }
 
-    return await prisma.post.findMany({
+    const posts = await prisma.post.findMany({
       where: {
         profileId: profile.id,
       },
@@ -103,6 +123,10 @@ export class PostsService {
         toolsTags: true,
       },
     });
+
+    return {
+      posts
+    }
   }
 
   remove(id: number) {

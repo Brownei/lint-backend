@@ -20,6 +20,13 @@ export class CollaboratorsController {
     return await this.collaboratorsService.getAllCollaborators(email);
   }
 
+  @Get('/:username')
+  @UseGuards(FirebaseAuthGuard)
+  async getAllCollaboratorsConcerningAUser(@CurrentUser('email') email: string, @Param('username') username: string) {
+    return await this.collaboratorsService.getAllCollaboratorsConcerningAUser(email, username);
+  }
+
+
   @Delete(':id/delete')
   @UseGuards(FirebaseAuthGuard)
   async deleteCollaborator(

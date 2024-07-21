@@ -9,5 +9,6 @@ import { MessageAttachmentsModule } from '../message-attachments/message-attachm
   imports: [CollaboratorsModule, ConversationsModule, MessageAttachmentsModule],
   controllers: [MessagesController],
   providers: [MessagesService],
+  exports: [MessagesService]
 })
-export class MessagesModule {}
+export class MessagesModule { }

@@ -6,23 +6,30 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { CollaboratorNotFoundException } from './exceptions/CollaboratorNotFound';
-import { NotCollaboratingException } from './exceptions/NotCollaborating';
 import { DeleteCollaboratorException } from './exceptions/DeleteCollaborator';
 import { prisma } from '../prisma.module';
 import { pusher } from '../pusher.module';
+import { Collaborators } from '@prisma/client';
+import { CollaboratorsReturns } from 'src/utils/types/types';
+import { UserNotFoundException } from 'src/users/exceptions/UserNotFound';
 
 @Injectable()
 export class CollaboratorsService {
   constructor() { }
 
-  async createCollaborators(senderId: number, receiverId: number) {
-    const activelyCollaborating = this.isCurrentlyCollaborating(
+  async createCollaborators(senderId: number, receiverId: number): Promise<{
+    success?: HttpException;
+    error?: Error
+  }> {
+    const activelyCollaborating = await this.isCurrentlyCollaborating(
       senderId,
       receiverId,
     );
 
     if (activelyCollaborating)
-      throw new ConflictException('You guys are currently collaborating');
+      return {
+        error: new ConflictException('You guys are currently collaborating')
+      }
 
     const collaborators = await prisma.collaborators.create({
       data: {
@@ -35,19 +42,25 @@ export class CollaboratorsService {
       message: JSON.stringify(collaborators),
     });
 
-    return new HttpException('Created', HttpStatus.CREATED);
+    return {
+      success: new HttpException('Created', HttpStatus.CREATED)
+    }
   }
 
-  async getAllCollaborators(email: string) {
+  async getAllCollaborators(email: string): Promise<{
+    error?: Error
+    collaborators?: CollaboratorsReturns[]
+  }> {
     const { id } = await prisma.user.findUnique({
       where: {
         email
       }
     })
 
-    if (!id) throw new UnauthorizedException('No access');
-
-    return await prisma.collaborators.findMany({
+    if (!id) return {
+      error: new UnauthorizedException('No access')
+    }
+    const collaborators = await prisma.collaborators.findMany({
       where: {
         OR: [
           {
@@ -61,45 +74,132 @@ export class CollaboratorsService {
       select: {
         receiver: {
           select: {
-            username: true,
             profileImage: true,
+            fullName: true,
+            occupation: true
           },
         },
         sender: {
           select: {
-            username: true,
             profileImage: true,
+            fullName: true,
+            occupation: true
           },
         },
       },
     });
+
+
+    return {
+      collaborators
+    }
   }
 
-  async findCollaboratorById(id: number) {
+  async getAllCollaboratorsConcerningAUser(email: string, username: string): Promise<{
+    error?: Error
+    collaborators?: CollaboratorsReturns[]
+  }> {
+    const { id } = await prisma.user.findUnique({
+      where: {
+        email
+      }
+    })
+
+    if (!id) return {
+      error: new UnauthorizedException('No access')
+    }
+
+    const profile = await prisma.profile.findUnique({
+      where: {
+        username
+      }
+    })
+
+    if (!profile) return {
+      error: new UserNotFoundException()
+    }
+
+    if (profile.userId === id) {
+      return this.getAllCollaborators(email)
+    }
+
+    const collaborators = await prisma.collaborators.findMany({
+      where: {
+        OR: [
+          {
+            receiverId: id,
+          },
+          {
+            senderId: id,
+          },
+        ],
+      },
+      select: {
+        receiver: {
+          select: {
+            profileImage: true,
+            fullName: true,
+            occupation: true
+          },
+        },
+        sender: {
+          select: {
+            profileImage: true,
+            fullName: true,
+            occupation: true
+          },
+        },
+      },
+    });
+
+
+    return {
+      collaborators
+    }
+
+  }
+
+  async findCollaboratorById(id: number): Promise<{
+    collaborator?: Collaborators
+    error?: Error
+  }> {
     const collaborator = await prisma.collaborators.findUnique({
       where: {
         id,
       },
     });
 
-    if (!collaborator) throw new CollaboratorNotFoundException();
+    if (!collaborator) return {
+      error: new CollaboratorNotFoundException()
+    }
 
-    return collaborator;
+    return {
+      collaborator
+    };
   }
 
-  async deleteCollaborator(id: number, email: string) {
+  async deleteCollaborator(id: number, email: string): Promise<{
+    error?: Error
+    success?: HttpException
+  }> {
     const { id: userId } = await prisma.user.findUnique({
       where: {
         email
       }
     })
 
-    if (!userId) throw new UnauthorizedException('No access');
+    if (!userId) return {
+      error: new UnauthorizedException('No access')
+    }
 
-    const collaborator = await this.findCollaboratorById(id);
-    if (!collaborator) throw new CollaboratorNotFoundException();
+    const { collaborator } = await this.findCollaboratorById(id);
+    if (!collaborator) return {
+      error: new CollaboratorNotFoundException()
+    }
     if (collaborator.receiverId !== userId || collaborator.senderId !== userId)
-      throw new DeleteCollaboratorException();
+      return {
+        error: new DeleteCollaboratorException()
+      }
 
     await prisma.collaborators.delete({
       where: {
@@ -107,10 +207,12 @@ export class CollaboratorsService {
       },
     });
 
-    return new HttpException('Deleted', HttpStatus.OK);
+    return {
+      success: new HttpException('Deleted', HttpStatus.OK)
+    }
   }
 
-  async isCurrentlyCollaborating(senderId: number, receiverId: number) {
+  async isCurrentlyCollaborating(senderId: number, receiverId: number): Promise<Collaborators> {
     const currentlyCollaborating = await prisma.collaborators.findFirst({
       where: {
         OR: [
@@ -125,8 +227,6 @@ export class CollaboratorsService {
         ],
       },
     });
-
-    if (!currentlyCollaborating) throw new NotCollaboratingException();
 
     return currentlyCollaborating;
   }

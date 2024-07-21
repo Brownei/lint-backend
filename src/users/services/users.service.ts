@@ -12,14 +12,18 @@ import { UserNotFoundException } from '../exceptions/UserNotFound';
 import { User } from '@prisma/client';
 import { prisma } from '../../prisma.module';
 import * as bcrypt from 'bcrypt';
+import { ProfileReturns, UserDetails, UserReturns } from 'src/utils/types/types';
 // import { UserReturns } from 'src/utils/types/types';
 
 @Injectable()
 export class UsersService {
-  constructor() {}
+  constructor() { }
 
   //CREATING A USER ACCOUNT
-  async createANewUser(createUserDto: CreateUserDto) {
+  async createANewUser(createUserDto: CreateUserDto): Promise<{
+    user?: UserReturns
+    error?: Error
+  }> {
     const hashedPassword = await bcrypt.hash(createUserDto.password, 10);
     const existingUser = await prisma.user.findUnique({
       where: {
@@ -27,7 +31,9 @@ export class UsersService {
       },
     });
 
-    if (existingUser) throw new UserAlreadyExistsException();
+    if (existingUser) return {
+      error: new UserAlreadyExistsException()
+    }
 
     const newUser = await prisma.user.create({
       data: {
@@ -47,7 +53,9 @@ export class UsersService {
       },
     });
 
-    return newUser;
+    return {
+      user: newUser
+    };
   }
 
   //FINDING ALL USERS
@@ -56,7 +64,10 @@ export class UsersService {
   }
 
   // FIND ALL USERS BY USERNAME
-  async findOneUserByUserName(username: string) {
+  async findOneUserByUserName(username: string): Promise<{
+    user?: ProfileReturns
+    error?: Error
+  }> {
     const user = await prisma.profile.findUnique({
       where: {
         username,
@@ -66,18 +77,29 @@ export class UsersService {
         profileImage: true,
         post: true,
         id: true,
+        fullName: true,
+        occupation: true,
+        bio: true,
+        location: true
       },
     });
 
     if (!user) {
-      throw new UnauthorizedException();
+      return {
+        error: new UnauthorizedException()
+      }
     }
 
-    return user;
+    return {
+      user
+    };
   }
 
   //FINDING A PARTICULAR USER ACCOUNT
-  async findOneUserById(id: number) {
+  async findOneUserById(id: number): Promise<{
+    user?: UserDetails
+    error?: Error
+  }> {
     const user = await prisma.user.findUnique({
       where: {
         id,
@@ -90,33 +112,43 @@ export class UsersService {
       },
     });
 
-    if (!user) {
-      throw new UserNotFoundException();
+    if (!user) return {
+      error: new UserNotFoundException()
     }
 
-    return user;
+    return {
+      user: user
+    };
   }
 
   //FINDING A PARTICULAR USER ACCOUNT THROUGH EMAIL
-  async findOneUserByEmail(email: string) {
+  async findOneUserByEmail(email: string): Promise<{
+    error?: Error
+    user?: UserDetails
+  }> {
     const user = await prisma.user.findUnique({
       where: {
         email,
       },
     });
 
-    if (!user) {
-      throw new UserNotFoundException();
+    if (!user) return {
+      error: new UserNotFoundException()
     }
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { password, ...otherDetails } = user;
 
-    return otherDetails;
+    return {
+      user: otherDetails
+    };
   }
 
   //FINDING A PARTICULAR USER ACCOUNT THROUGH EMAIL
-  async findOneUserByEmailAndGetSomeData(email: string) {
+  async findOneUserByEmailAndGetSomeData(email: string): Promise<{
+    user?: UserDetails
+    error?: Error
+  }> {
     const user = await prisma.user.findUnique({
       where: {
         email,
@@ -131,15 +163,20 @@ export class UsersService {
       },
     });
 
-    if (user) {
-      return user;
+    if (user) return {
+      user: user
     }
 
-    throw new UserNotFoundException();
+    return {
+      error: new UserNotFoundException()
+    }
   }
 
   //FINDING A PARTICULAR USER ACCOUNT THROUGH FULLNAME
-  async findOneUserByFullName(fullName: string) {
+  async findOneUserByFullName(fullName: string): Promise<{
+    user?: UserDetails
+    error?: Error
+  }> {
     const user = await prisma.user.findFirst({
       where: { fullName },
       select: {
@@ -151,10 +188,14 @@ export class UsersService {
     });
 
     if (user) {
-      return user;
+      return {
+        user: user
+      };
     }
 
-    throw new UserNotFoundException();
+    return {
+      error: new UserNotFoundException()
+    }
   }
 
   //UPDATING USER ACCOUNT
@@ -162,9 +203,14 @@ export class UsersService {
     userId: number,
     fullName: string,
     updateUserDto: UpdateUserDto,
-  ) {
+  ): Promise<{
+    success?: HttpException
+    error?: Error
+  }> {
     if (!updateUserDto && !userId) {
-      throw new UnauthorizedException();
+      return {
+        error: new UnauthorizedException()
+      }
     }
     const user = await prisma.user.findFirst({
       where: {
@@ -173,7 +219,9 @@ export class UsersService {
       },
     });
     if (!user) {
-      throw new UserNotFoundException();
+      return {
+        error: new UserNotFoundException()
+      }
     } else {
       await prisma.user.update({
         where: {
@@ -184,14 +232,21 @@ export class UsersService {
         },
       });
 
-      return new HttpException('Deleted', HttpStatus.ACCEPTED);
+      return {
+        success: new HttpException('Deleted', HttpStatus.ACCEPTED)
+      }
     }
   }
 
   //DELETING A PARTICULAR USER ACCOUNT
-  async deleteAUser(userId: number, fullName: string) {
+  async deleteAUser(userId: number, fullName: string): Promise<{
+    success?: HttpException
+    error?: Error
+  }> {
     if (!userId && !fullName) {
-      throw new UnauthorizedException('No userId');
+      return {
+        error: new UnauthorizedException('No userId')
+      }
     }
 
     const user = await prisma.user.findFirst({
@@ -201,7 +256,9 @@ export class UsersService {
       },
     });
     if (!user) {
-      throw new UnauthorizedException();
+      return {
+        error: new UnauthorizedException()
+      }
     } else {
       await prisma.user.delete({
         where: {
@@ -209,7 +266,9 @@ export class UsersService {
         },
       });
 
-      return new HttpException('Deleted', HttpStatus.ACCEPTED);
+      return {
+        success: new HttpException('Deleted', HttpStatus.ACCEPTED)
+      }
     }
   }
 }

@@ -1,5 +1,6 @@
 import {
   ConflictException,
+  HttpException,
   Injectable,
   NotFoundException,
   UnauthorizedException,
@@ -11,7 +12,6 @@ import { LoginData, UserReturns } from '../utils/types/types';
 import { UsersService } from '../users/services/users.service';
 import { prisma } from '../prisma.module';
 import { CreateUserDto } from 'src/users/dto/create-user.dto';
-import * as argon2 from 'argon2';
 import * as bcrypt from 'bcrypt';
 
 @Injectable()
@@ -19,8 +19,9 @@ export class AuthService {
   constructor(private readonly userServices: UsersService) { }
 
   async verifyAndUpdateUser(accessToken: string): Promise<{
-    decodedToken: DecodedIdToken;
-    userInfo: UserReturns;
+    decodedToken?: DecodedIdToken;
+    error?: Error;
+    userInfo?: UserReturns;
   }> {
     const decodedToken = await admin.auth().verifyIdToken(accessToken);
 
@@ -39,24 +40,35 @@ export class AuthService {
     });
 
     if (!userInfo) {
-      throw new UserNotFoundException();
+      return {
+        error: new UserNotFoundException()
+      };
     }
 
-    return { decodedToken, userInfo };
+    return {
+      decodedToken, userInfo
+    };
   }
 
   async verifyandUpdateUserWithEmailAndPassword(accessToken: string, loginDetails: LoginData): Promise<{
-    decodedToken: DecodedIdToken;
-    userInfo: UserReturns;
+    decodedToken?: DecodedIdToken;
+    userInfo?: UserReturns;
+    error?: Error
   }> {
     const decodedToken = await admin.auth().verifyIdToken(accessToken);
 
     if (!decodedToken) {
-      throw new ConflictException('check your network!');
+      return {
+        decodedToken: null,
+        userInfo: null,
+        error: new ConflictException('check your network!')
+      };
     }
 
-    if (decodedToken.email !== loginDetails.email) throw new ConflictException('You scammer!');
+    if (decodedToken.email !== loginDetails.email) return {
+      error: new ConflictException('check your network!')
 
+    }
     const user = await prisma.user.findUnique({
       where: {
         email: loginDetails.email,
@@ -73,12 +85,16 @@ export class AuthService {
     });
 
     if (!user) {
-      throw new UserNotFoundException();
+      return {
+        error: new UserNotFoundException()
+      }
     }
 
     const passwordMatch = await bcrypt.compare(loginDetails.password, user.password)
 
-    if (!passwordMatch) throw new UnauthorizedException('Incorrect password')
+    if (!passwordMatch) return {
+      error: new UnauthorizedException('Incorrect password')
+    }
 
     const { password, ...otherDetails } = user
     return { decodedToken, userInfo: otherDetails };
@@ -86,8 +102,9 @@ export class AuthService {
 
 
   async verifyAndCreateUserThroughEmailAndPassword(accessToken: string, createUserDto: CreateUserDto): Promise<{
-    decodedToken: DecodedIdToken;
-    userInfo: UserReturns;
+    decodedToken?: DecodedIdToken;
+    userInfo?: UserReturns;
+    error?: Error
   }> {
     const decodedToken = await admin.auth().verifyIdToken(accessToken);
 
@@ -118,15 +135,16 @@ export class AuthService {
     });
 
     await admin.auth().setCustomUserClaims(decodedToken.uid, {
-      userId: newUser.id,
+      userId: newUser.user.id,
     });
 
-    return { decodedToken, userInfo: newUser };
+    return { decodedToken, userInfo: newUser.user };
   }
 
   async verifyAndCreateUser(accessToken: string): Promise<{
-    decodedToken: DecodedIdToken;
-    userInfo: UserReturns;
+    decodedToken?: DecodedIdToken;
+    error?: Error;
+    userInfo?: UserReturns;
   }> {
     const decodedToken = await admin.auth().verifyIdToken(accessToken);
 
@@ -157,15 +175,16 @@ export class AuthService {
     });
 
     await admin.auth().setCustomUserClaims(decodedToken.uid, {
-      userId: newUser.id,
+      userId: newUser.user.id,
     });
 
-    return { decodedToken, userInfo: newUser };
+    return { decodedToken, userInfo: newUser.user };
   }
 
   async createSessionCookie(accessToken: string): Promise<{
-    sessionCookie: string;
-    expiresIn: number;
+    sessionCookie?: string;
+    expiresIn?: number;
+    error?: Error
   }> {
     const expiresIn = 60 * 60 * 24 * 5 * 1000;
     const sessionCookie = await admin.auth().createSessionCookie(accessToken, {
@@ -179,12 +198,17 @@ export class AuthService {
     const userInfo =
       await this.userServices.findOneUserByEmailAndGetSomeData(email);
 
-    if (!userInfo) throw new UserNotFoundException();
+    if (!userInfo) return {
+      error: new UserNotFoundException()
+    }
 
     return userInfo;
   }
 
-  async revokeToken(sessionCookie: string): Promise<void> {
+  async revokeToken(sessionCookie: string): Promise<{
+    success?: HttpException
+    error?: Error
+  }> {
     try {
       const decodedToken = await admin
         .auth()
@@ -193,14 +217,21 @@ export class AuthService {
     } catch (error) {
       if (error instanceof Error) {
         console.log(error);
-        throw new UnauthorizedException();
+        return {
+          error: new UnauthorizedException()
+        }
       }
 
-      throw new ConflictException();
+      return {
+        success: new ConflictException()
+      }
     }
   }
 
-  async verifyToken(accessToken: string) {
+  async verifyToken(accessToken: string): Promise<{
+    userInfo?: UserReturns
+    error?: Error
+  }> {
     const decodedToken = await admin.auth().verifySessionCookie(accessToken);
 
     console.log(decodedToken);
@@ -219,8 +250,12 @@ export class AuthService {
       },
     });
 
-    if (!userInfo) throw new NotFoundException('User not found!');
+    if (!userInfo) return {
+      error: new NotFoundException('User not found!')
+    }
 
-    return userInfo;
+    return {
+      userInfo
+    };
   }
 }

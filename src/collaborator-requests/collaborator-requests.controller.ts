@@ -18,6 +18,7 @@ import { UsersService } from '../users/services/users.service';
 import { PostsService } from '../posts/posts.service';
 import { UpdateCollaboratorRequestDto } from './dto/update-collaboration-requests.dto';
 import { FirebaseAuthGuard } from 'src/auth/guard/firebase.guard';
+
 @Controller('collaborators/requests')
 export class CollaboratorRequestController {
   constructor(
@@ -48,12 +49,12 @@ export class CollaboratorRequestController {
     @CurrentUser('email') email: string,
     @Body() DTO: CreateCollaboratorRequestDto,
   ) {
-    const sender = await this.userService.findOneUserByEmail(email);
-    const receiver = await this.userService.findOneUserById(DTO.receiverId);
-    const postInterested = await this.postService.findOne(DTO.postId);
+    const { user: sender } = await this.userService.findOneUserByEmail(email);
+    const { user: receiver } = await this.userService.findOneUserById(DTO.receiverId);
+    const { particularPost: postInterested } = await this.postService.findOne(DTO.postId);
 
     if (!sender || !receiver || !postInterested)
-      throw new UnauthorizedException();
+      return new UnauthorizedException();
 
     const response = await this.collaboratorRequestService.create(
       sender.id,
@@ -97,9 +98,9 @@ export class CollaboratorRequestController {
     @Param('id', ParseUUIDPipe) id: string,
     @Body() DTO: UpdateCollaboratorRequestDto,
   ) {
-    const receiver = await this.userService.findOneUserByEmail(email);
+    const { user: receiver } = await this.userService.findOneUserByEmail(email);
 
-    if (!receiver) throw new UnauthorizedException();
+    if (!receiver) return new UnauthorizedException();
 
     const response = await this.collaboratorRequestService.accept(
       DTO,

@@ -1,14 +1,19 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { CreateProfileDto } from '../dto/create-profile.dto';
 import { UserAlreadyExistsException } from '../exceptions/UserAlreadyExist';
 import { prisma } from '../../prisma.module';
 import { UserNotFoundException } from '../exceptions/UserNotFound';
+import { Profile } from '@prisma/client';
+import { ProfileReturns } from 'src/utils/types/types';
 
 @Injectable()
 export class ProfileService {
   constructor() { }
 
-  async createProfile(profileDTO: CreateProfileDto, email: string) {
+  async createProfile(profileDTO: CreateProfileDto, email: string): Promise<{
+    profile?: Profile
+    error?: Error
+  }> {
     const existingProfile = await prisma.profile.findUnique({
       where: {
         username: profileDTO.username,
@@ -22,9 +27,13 @@ export class ProfileService {
     });
 
     if (existingProfile) {
-      throw new UserAlreadyExistsException();
+      return {
+        error: new UserAlreadyExistsException()
+      }
     } else if (!currentUser) {
-      throw new UnauthorizedException();
+      return {
+        error: new UnauthorizedException()
+      }
     } else {
       const newProfile = await prisma.profile.create({
         data: {
@@ -34,30 +43,46 @@ export class ProfileService {
         },
       });
 
-      return newProfile;
+      return {
+        profile: newProfile
+      };
     }
   }
 
   //GET PROFILE THROUGH ID
-  async getProfileThroughId(id: number, currentUserId: number) {
+  async getProfileThroughId(id: number, currentUserId: number): Promise<{
+    profile?: Profile | ProfileReturns
+    error?: Error
+  }> {
     const currentProfile = await prisma.profile.findUnique({
       where: {
         id,
       },
     });
 
+    if (!currentProfile) return {
+      error: new NotFoundException('User not found!')
+    }
+
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { userId, ...otherDetails } = currentProfile;
 
     if (currentProfile.id !== currentUserId) {
-      return otherDetails;
+      return {
+        profile: otherDetails
+      };
     }
 
-    return currentProfile;
+    return {
+      profile: currentProfile
+    };
   }
 
   //GET MY PROFILE
-  async getProfile(username: string, email: string) {
+  async getProfile(username: string, email: string): Promise<{
+    profile?: Profile | ProfileReturns
+    error?: Error
+  }> {
     try {
       const currentProfile = await prisma.profile.findUnique({
         where: {
@@ -74,30 +99,43 @@ export class ProfileService {
         },
       });
 
-      if (!currentProfile) throw new UserNotFoundException();
+      if (!currentProfile) return {
+        error: new UserNotFoundException()
+      }
 
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { userId, ...otherDetails } = currentProfile;
 
       if (currentProfile.id !== currentUser.profile.id) {
-        return otherDetails;
+        return {
+          profile: otherDetails
+        };
       }
 
-      return currentProfile;
+      return {
+        profile: currentProfile
+      };
     } catch (error) {
       console.log(error);
-      throw new UnauthorizedException();
+      return {
+        error: new UnauthorizedException()
+      }
     }
   }
 
-  async getProfileThroughUserEmail(email: string) {
+  async getProfileThroughUserEmail(email: string): Promise<{
+    profile?: Profile
+    error?: Error
+  }> {
     const currentUser = await prisma.user.findUnique({
       where: {
         email,
       },
     });
 
-    if (!currentUser) throw new UserNotFoundException();
+    if (!currentUser) return {
+      error: new UserNotFoundException()
+    }
 
     const currentProfile = await prisma.profile.findUnique({
       where: {
@@ -105,16 +143,27 @@ export class ProfileService {
       },
     });
 
-    return currentProfile;
+    return {
+      profile: currentProfile
+    };
   }
 
-  async getSomeoneProfileThroughId(id: number) {
+  async getSomeoneProfileThroughId(id: number): Promise<{
+    profile?: Profile
+    error?: Error
+  }> {
     const currentProfile = await prisma.profile.findUnique({
       where: {
         id,
       },
     });
 
-    return currentProfile;
+    if (!currentProfile) return {
+      error: new UserNotFoundException()
+    }
+
+    return {
+      profile: currentProfile
+    };
   }
 }

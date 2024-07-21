@@ -9,7 +9,7 @@ import { CollaboratorNotFoundException } from 'src/collaborators/exceptions/Coll
 import { ConversationExistsException } from './exceptions/ConversationExistsException';
 import { prisma } from '../prisma.module';
 import { ProfileService } from '../users/services/profile.service';
-import { Message } from '@prisma/client';
+import { Conversation, Message } from '@prisma/client';
 
 @Injectable()
 export class ConversationsService {
@@ -20,10 +20,10 @@ export class ConversationsService {
     private readonly collaboratorService: CollaboratorsService,
     @Inject(ProfileService)
     private readonly profileService: ProfileService,
-  ) {}
+  ) { }
 
-  async getConversations(email: string) {
-    const profile = await this.profileService.getProfileThroughUserEmail(email);
+  async getConversations(email: string): Promise<Conversation[]> {
+    const { profile } = await this.profileService.getProfileThroughUserEmail(email);
 
     return await prisma.conversation.findMany({
       where: {
@@ -36,31 +36,56 @@ export class ConversationsService {
           },
         ],
       },
+      include: {
+        creator: {
+          select: {
+            fullName: true,
+            profileImage: true
+          }
+        },
+        recipient: {
+          select: {
+            fullName: true,
+            profileImage: true
+          }
+        }
+      }
     });
   }
 
   async createConversation(
     email: string,
     createConversationpayload: CreateConversationDto,
-  ) {
-    const creator =
+  ): Promise<{
+    error?: Error
+    newConversation?: Conversation
+  }> {
+    const { user: creator } =
       await this.userService.findOneUserByEmailAndGetSomeData(email);
     const { fullName } = createConversationpayload;
-    const recipient = await this.userService.findOneUserByFullName(fullName);
+    const { user: recipient } = await this.userService.findOneUserByFullName(fullName);
 
-    if (!recipient) throw new UserNotFoundException();
+    if (!recipient) return {
+      error: new UserNotFoundException()
+    }
     if (creator.id === recipient.id)
-      throw new CreateConversationException(
-        'Cannot create Conversation with yourself',
-      );
+      return {
+        error: new CreateConversationException(
+          'Cannot create Conversation with yourself',
+        )
+      }
     const isCollaborating =
       await this.collaboratorService.isCurrentlyCollaborating(
         creator.id,
         recipient.id,
       );
-    if (!isCollaborating) throw new CollaboratorNotFoundException();
+    if (!isCollaborating) return {
+      error: new CollaboratorNotFoundException()
+    }
     const exists = await this.isCreated(creator.id, recipient.id);
-    if (exists) throw new ConversationExistsException();
+    if (exists) return {
+      error: new ConversationExistsException()
+    }
 
     const newConversation = await prisma.conversation.create({
       data: {
@@ -69,7 +94,9 @@ export class ConversationsService {
       },
     });
 
-    return newConversation;
+    return {
+      newConversation
+    };
   }
 
   async findById(id: string) {
@@ -133,7 +160,7 @@ export class ConversationsService {
 
   async hasAccess(id: string, userId: number) {
     const conversation = await this.findById(id);
-    if (!conversation) throw new ConversationNotFoundException();
+    if (!conversation) return new ConversationNotFoundException();
     return (
       conversation.creatorId === userId || conversation.recipientId === userId
     );

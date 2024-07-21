@@ -38,7 +38,7 @@ export class AuthController {
       accessToken = token;
     }
     if (!accessToken) {
-      throw new UnauthorizedException('No access token!');
+      return new UnauthorizedException('No access token!');
     }
 
     try {
@@ -64,10 +64,10 @@ export class AuthController {
     } catch (error) {
       if (error instanceof Error) {
         console.log(error);
-        throw new UnauthorizedException('Major error cannot explain');
+        return new UnauthorizedException('Major error cannot explain');
       }
       this.logger.error(error);
-      throw new NotAcceptableException();
+      return new NotAcceptableException();
     }
   }
 
@@ -85,7 +85,7 @@ export class AuthController {
       accessToken = token;
     }
     if (!accessToken) {
-      throw new UnauthorizedException('No access token!');
+      return new UnauthorizedException('No access token!');
     }
     const { userInfo } = await this.authService.verifyandUpdateUserWithEmailAndPassword(
       accessToken,
@@ -120,7 +120,7 @@ export class AuthController {
       accessToken = token;
     }
     if (!accessToken) {
-      throw new UnauthorizedException('No access token!');
+      return new UnauthorizedException('No access token!');
     }
     const { userInfo } =
       await this.authService.verifyAndCreateUser(accessToken);
@@ -153,7 +153,7 @@ export class AuthController {
       accessToken = token;
     }
     if (!accessToken) {
-      throw new UnauthorizedException('No access token!');
+      return new UnauthorizedException('No access token!');
     }
     const { userInfo } =
       await this.authService.verifyAndCreateUserThroughEmailAndPassword(accessToken, createUserDto);
@@ -200,20 +200,20 @@ export class AuthController {
         accessToken = token;
       }
       if (!accessToken) {
-        throw new UnauthorizedException('No access token!');
+        return new UnauthorizedException('No access token!');
       }
 
       if (!accessToken) {
-        throw new UnauthorizedException('No access token!');
+        return new UnauthorizedException('No access token!');
       }
 
       await this.authService.revokeToken(accessToken);
       res.clearCookie('session');
       return new HttpException('Logged out', HttpStatus.OK);
     } catch (error) {
-      if (error instanceof Error) throw new UnauthorizedException();
+      if (error instanceof Error) return new UnauthorizedException();
       this.logger.error(error);
-      throw new BadRequestException();
+      return new BadRequestException();
     }
   }
 }
