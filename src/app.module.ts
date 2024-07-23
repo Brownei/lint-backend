@@ -11,6 +11,9 @@ import { PostsModule } from './posts/posts.module';
 import { UsersModule } from './users/users.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+import { MessagesModule } from './messages/messages.module';
+import { CollaboratorsModule } from './collaborators/collaborators.module';
+import { MessageAttachmentsModule } from './message-attachments/message-attachments.module';
 
 @Module({
   imports: [
@@ -23,10 +26,13 @@ import { AppService } from './app.service';
     CollaboratorRequestModule,
     AuthModule,
     ConversationsModule,
+    MessagesModule,
+    CollaboratorsModule,
+    MessageAttachmentsModule
   ],
   controllers: [AppController],
   providers: [AppService],
 })
 export class AppModule {
-  constructor() {}
+  constructor() { }
 }

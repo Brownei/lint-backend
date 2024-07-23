@@ -17,11 +17,11 @@ import { EditMessageDto } from './dto/edit-message.dto';
 import { pusher } from '../pusher.module';
 import { FirebaseAuthGuard } from 'src/auth/guard/firebase.guard';
 
-@Controller('conversations/:id/messages')
+@Controller('messages')
 export class MessagesController {
   constructor(private readonly messagesService: MessagesService) { }
 
-  @Post()
+  @Post(':id')
   @UseGuards(FirebaseAuthGuard)
   async createMessage(
     @CurrentUser('id') userId: number,
@@ -44,34 +44,33 @@ export class MessagesController {
     );
   }
 
-  @Get()
+  @Get(':conversationId')
   @UseGuards(FirebaseAuthGuard)
   async getMessagesFromConversation(
-    @CurrentUser('id') userId: number,
-    @Param('id', ParseUUIDPipe) conversationId: string,
+    @Param('conversationId', ParseUUIDPipe) conversationId: string,
   ) {
-    const messages = await this.messagesService.getMessages(conversationId);
-    return { conversationId, messages };
+    console.log('Reached messages!')
+    console.log(conversationId)
+    return await this.messagesService.getMessages(conversationId);
   }
 
-  @Delete(':messageId')
+  @Delete(':/conversationId/:messageId')
   @UseGuards(FirebaseAuthGuard)
   async deleteMessageFromConversation(
-    @CurrentUser('id') userId: number,
-    @Param('id', ParseUUIDPipe) conversationId: string,
+    @CurrentUser('id') id: number,
+    @Param('conversationId', ParseUUIDPipe) conversationId: string,
     @Param('messageId', ParseUUIDPipe) messageId: string,
   ) {
     // const params = { userId, conversationId, messageId };
-    await this.messagesService.deleteMessage(userId, conversationId, messageId);
-    return { conversationId, messageId };
+    return this.messagesService.deleteMessage(id, conversationId, messageId);
   }
 
   // api/conversations/:conversationId/messages/:messageId
-  @Patch(':messageId')
+  @Patch(':conversationId/:messageId')
   @UseGuards(FirebaseAuthGuard)
   async editMessage(
     @CurrentUser('id') userId: number,
-    @Param('id', ParseUUIDPipe) conversationId: string,
+    @Param('conversationId', ParseUUIDPipe) conversationId: string,
     @Param('messageId', ParseUUIDPipe) messageId: string,
     @Body() { content }: EditMessageDto,
   ) {

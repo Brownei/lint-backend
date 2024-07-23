@@ -234,8 +234,6 @@ export class AuthService {
   }> {
     const decodedToken = await admin.auth().verifySessionCookie(accessToken);
 
-    console.log(decodedToken);
-
     const userInfo = await prisma.user.findUnique({
       where: {
         email: decodedToken.email,

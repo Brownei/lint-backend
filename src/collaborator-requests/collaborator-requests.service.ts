@@ -255,55 +255,68 @@ export class CollaboratorRequestService {
 
 
       if (areCollaborators) {
+        const alreadyInAConversation = await this.conversationService.isCreated(sender.id, receiver.id)
+        if (alreadyInAConversation) {
+          await this.messageService.createMessage({
+            content: content
+          }, sender.id, alreadyInAConversation.id)
+
+          return {
+            success: new HttpException('Message sent!', HttpStatus.CREATED)
+          }
+
+        };
         const { newConversation } = await this.conversationService.createConversation(senderUserDetails.email, { fullName: receiver.fullName })
         await this.messageService.createMessage({
-          content
+          content: content
         }, sender.id, newConversation.id)
 
         return {
           success: new HttpException('Message sent!', HttpStatus.CREATED)
         }
+      } else {
+
+        const collaboratorsRequest = await prisma.collaboratorRequest.create({
+          data: {
+            senderId,
+            receiverId,
+            postId,
+            content: content,
+            status: 'pending',
+          },
+          select: {
+            post: {
+              select: {
+                id: true,
+                title: true,
+                createdAt: true,
+              },
+            },
+            sender: {
+              select: {
+                occupation: true,
+                fullName: true,
+                username: true,
+                profileImage: true,
+              },
+            },
+            content: true,
+            id: true,
+            createdAt: true,
+          },
+        });
+
+        await pusher.trigger(
+          String(receiverId),
+          'incoming_collaborator_requests',
+          collaboratorsRequest,
+        );
+
+        return {
+          collaboratorsRequest
+        };
+
       }
-
-      const collaboratorsRequest = await prisma.collaboratorRequest.create({
-        data: {
-          senderId,
-          receiverId,
-          postId,
-          content: content,
-          status: 'pending',
-        },
-        select: {
-          post: {
-            select: {
-              id: true,
-              title: true,
-              createdAt: true,
-            },
-          },
-          sender: {
-            select: {
-              occupation: true,
-              fullName: true,
-              username: true,
-              profileImage: true,
-            },
-          },
-          content: true,
-          id: true,
-          createdAt: true,
-        },
-      });
-
-      await pusher.trigger(
-        String(receiverId),
-        'incoming_collaborator_requests',
-        collaboratorsRequest,
-      );
-
-      return {
-        collaboratorsRequest
-      };
     } catch (error) {
       console.log(error);
       return {

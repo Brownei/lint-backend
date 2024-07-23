@@ -6,7 +6,7 @@ import { FirebaseAuthGuard } from 'src/auth/guard/firebase.guard';
 
 @Controller('conversations')
 export class ConversationsController {
-  constructor(private readonly conversationsService: ConversationsService) {}
+  constructor(private readonly conversationsService: ConversationsService) { }
 
   @Post()
   @UseGuards(FirebaseAuthGuard)
@@ -23,6 +23,7 @@ export class ConversationsController {
   @Get()
   @UseGuards(FirebaseAuthGuard)
   async getConversations(@CurrentUser('email') email: string) {
+    console.log('Reached!')
     return this.conversationsService.getConversations(email);
   }
 
