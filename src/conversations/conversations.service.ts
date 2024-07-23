@@ -40,12 +40,18 @@ export class ConversationsService {
         creator: {
           select: {
             fullName: true,
-            profileImage: true
+            profileImage: true,
+            occupation: true,
+            id: true,
+            username: true
           }
         },
         recipient: {
           select: {
             fullName: true,
+            occupation: true,
+            id: true,
+            username: true,
             profileImage: true
           }
         }

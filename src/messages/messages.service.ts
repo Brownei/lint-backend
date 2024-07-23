@@ -7,9 +7,11 @@ import { CollaboratorNotFoundException } from '../collaborators/exceptions/Colla
 import { UsersService } from '../users/services/users.service';
 import { MessageException } from './exceptions/MessageException';
 import { prisma } from '../prisma.module';
-import { Conversation, Message } from '@prisma/client';
+import { Conversation, Message, Profile } from '@prisma/client';
 import { SuccessSentException } from '../exceptions/SuccessExceptions';
 import { pusher } from 'src/pusher.module';
+import { MessageAttachmentsService } from 'src/message-attachments/message-attachments.service';
+import { ProfileService } from 'src/users/services/profile.service';
 
 @Injectable()
 export class MessagesService {
@@ -18,22 +20,27 @@ export class MessagesService {
     private readonly conversationService: ConversationsService,
     @Inject(UsersService)
     private readonly usersService: UsersService,
+    @Inject(ProfileService)
+    private readonly profileService: ProfileService,
+
     @Inject(CollaboratorsService)
     private readonly collaboratorsService: CollaboratorsService,
+    @Inject(MessageAttachmentsService)
+    private readonly messageAttachmentsService: MessageAttachmentsService
   ) { }
 
   async createMessage(
     createMessageDto: CreateMessageDto,
-    userId: number,
+    email: string,
     conversationId: string,
   ): Promise<{
     error?: Error
-    success?: HttpException
+    messages?: Message
   }> {
     const conversation =
       await this.conversationService.findById(conversationId);
 
-    const { user } = await this.usersService.findOneUserById(userId);
+    const { profile } = await this.profileService.getProfileThroughUserEmail(email);
 
     if (!conversation) return {
       error: new ConversationNotFoundException()
@@ -49,7 +56,7 @@ export class MessagesService {
     if (!isCurrentlyCollaborating) return {
       error: new CollaboratorNotFoundException()
     }
-    if (creatorId !== userId && recipientId !== userId)
+    if (creatorId !== profile.id && recipientId !== profile.id)
       return {
         error: new MessageException('Cannot Create Message')
       }
@@ -57,24 +64,21 @@ export class MessagesService {
     const newMessage = await prisma.message.create({
       data: {
         content: createMessageDto.content,
-        attachments: {
-          createMany: {
-            data: createMessageDto.attachments.map((attach) => ({
-              attachments: attach,
-            })),
-          },
-        },
-        creatorId: user.id,
+        creatorId: profile.id,
         conversationId,
       },
     });
+
+    if (createMessageDto.attachments) {
+      await this.messageAttachmentsService.create(createMessageDto.attachments, newMessage.id)
+    };
 
     pusher.trigger('collaborator-request', 'reject', {
       message: JSON.stringify(newMessage),
     });
 
     return {
-      success: new SuccessSentException()
+      messages: newMessage
     }
   }
 
@@ -85,8 +89,16 @@ export class MessagesService {
           id: conversationId,
         },
       },
+      include: {
+        conversation: {
+          select: {
+            recipient: true,
+            creator: true
+          }
+        }
+      },
       orderBy: {
-        createdAt: 'desc',
+        createdAt: 'asc',
       },
     });
   }

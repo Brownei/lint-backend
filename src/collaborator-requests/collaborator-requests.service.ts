@@ -8,7 +8,6 @@ import {
 } from '@nestjs/common';
 import { UsersService } from '../users/services/users.service';
 import { CollaboratorsService } from '../collaborators/collaborators.service';
-import { CollaboratorAlreadyExists } from '../collaborators/exceptions/CollaboratorAlreadyExists';
 import { CollaboratorException } from '../collaborators/exceptions/CollaboratorException';
 import {
   SuccessAcceptedException,
@@ -255,27 +254,50 @@ export class CollaboratorRequestService {
 
 
       if (areCollaborators) {
+        const ownerOfPost = receiver.fullName.split(' ')
         const alreadyInAConversation = await this.conversationService.isCreated(sender.id, receiver.id)
         if (alreadyInAConversation) {
           await this.messageService.createMessage({
-            content: content
-          }, sender.id, alreadyInAConversation.id)
+            content: content !== '' ? content : `Hello ${ownerOfPost[0]}, I’m interested in working with you.`
+          }, senderUserDetails.email, alreadyInAConversation.id)
 
+          await prisma.collaboratorRequest.create({
+            data: {
+              senderId,
+              receiverId,
+              postId,
+              content: content,
+              status: 'accepted'
+            }
+          })
           return {
             success: new HttpException('Message sent!', HttpStatus.CREATED)
           }
 
-        };
-        const { newConversation } = await this.conversationService.createConversation(senderUserDetails.email, { fullName: receiver.fullName })
-        await this.messageService.createMessage({
-          content: content
-        }, sender.id, newConversation.id)
+        } else {
+          const { newConversation } = await this.conversationService.createConversation(senderUserDetails.email, { fullName: receiver.fullName })
+          const newMessage = await this.messageService.createMessage({
+            content: content !== '' ? content : `Hello ${ownerOfPost[0]}, I’m interested in working with you.`
+          }, senderUserDetails.email, newConversation.id)
 
-        return {
-          success: new HttpException('Message sent!', HttpStatus.CREATED)
+          console.log(newMessage)
+          const request = await prisma.collaboratorRequest.create({
+            data: {
+              senderId,
+              receiverId,
+              postId,
+              content: content,
+              status: 'accepted'
+            }
+          })
+
+          console.log({ request })
+
+          return {
+            success: new HttpException('Message sent!', HttpStatus.CREATED)
+          }
         }
       } else {
-
         const collaboratorsRequest = await prisma.collaboratorRequest.create({
           data: {
             senderId,

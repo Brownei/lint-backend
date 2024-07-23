@@ -6,15 +6,14 @@ import { CollaboratorsService } from '../collaborators/collaborators.service';
 import { UsersModule } from '../users/users.module';
 import { UsersService } from '../users/services/users.service';
 import { PostsModule } from '../posts/posts.module';
-import { MessagesModule } from 'src/messages/messages.module';
-import { ConversationsModule } from 'src/conversations/conversations.module';
 import { MessagesService } from 'src/messages/messages.service';
 import { ConversationsService } from 'src/conversations/conversations.service';
+import { MessageAttachmentsService } from 'src/message-attachments/message-attachments.service';
 
 @Module({
   imports: [CollaboratorsModule, UsersModule, PostsModule],
   controllers: [CollaboratorRequestController],
-  providers: [CollaboratorRequestService, CollaboratorsService, UsersService, MessagesService, ConversationsService],
+  providers: [CollaboratorRequestService, CollaboratorsService, UsersService, MessagesService, ConversationsService, MessageAttachmentsService],
   exports: [CollaboratorRequestService],
 })
 export class CollaboratorRequestModule { }

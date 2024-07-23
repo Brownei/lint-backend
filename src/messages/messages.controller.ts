@@ -24,12 +24,12 @@ export class MessagesController {
   @Post(':id')
   @UseGuards(FirebaseAuthGuard)
   async createMessage(
-    @CurrentUser('id') userId: number,
-    @Param('id', ParseUUIDPipe) conversationId: string,
     @Body() createMessageDto: CreateMessageDto,
+    @CurrentUser('email') email: string,
+    @Param('id', ParseUUIDPipe) conversationId: string,
   ) {
     const { content, attachments } = createMessageDto;
-    if (!attachments || !content) return new EmptyMessageException();
+    if (!attachments && !content) return new EmptyMessageException();
 
     pusher.trigger(
       String(conversationId),
@@ -39,7 +39,7 @@ export class MessagesController {
 
     await this.messagesService.createMessage(
       createMessageDto,
-      userId,
+      email,
       conversationId,
     );
   }
