@@ -67,15 +67,23 @@ export class MessagesService {
         creatorId: profile.id,
         conversationId,
       },
+      include: {
+        conversation: {
+          select: {
+            recipient: true,
+            creator: true
+          }
+        }
+      }
     });
+
+    console.log({ newMessage, profile })
 
     if (createMessageDto.attachments) {
       await this.messageAttachmentsService.create(createMessageDto.attachments, newMessage.id)
     };
 
-    pusher.trigger('collaborator-request', 'reject', {
-      message: JSON.stringify(newMessage),
-    });
+    pusher.trigger(conversationId, 'new-message', newMessage);
 
     return {
       messages: newMessage

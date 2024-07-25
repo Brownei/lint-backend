@@ -1,6 +1,9 @@
 -- CreateEnum
 CREATE TYPE "Status" AS ENUM ('accepted', 'pending', 'rejected');
 
+-- CreateEnum
+CREATE TYPE "Help" AS ENUM ('Omom');
+
 -- CreateTable
 CREATE TABLE "User" (
     "id" SERIAL NOT NULL,
