@@ -212,7 +212,7 @@ export class CollaboratorRequestService {
   }
 
   async create(
-    senderId: number,
+    email: string,
     receiverId: number,
     postId: string,
     content: string,
@@ -223,11 +223,11 @@ export class CollaboratorRequestService {
   }> {
     try {
       const { profile: sender } =
-        await this.profileService.getSomeoneProfileThroughId(senderId);
+        await this.profileService.getProfileThroughUserEmail(email);
       const { profile: receiver } =
         await this.profileService.getSomeoneProfileThroughId(receiverId);
       const curentlyPending = await this.isPending(
-        senderId,
+        sender.id,
         postId,
         receiverId,
       );
@@ -238,32 +238,36 @@ export class CollaboratorRequestService {
         }
       }
 
+      console.log(sender, receiver)
+
       if (curentlyPending)
         return {
           error: new CollaboratorException('Collaborator Requesting Pending')
         }
 
-      if (receiverId === senderId)
+      if (receiverId === sender.id)
         return {
           error: new CollaboratorException('Cannot Collaborate With Yourself')
         }
 
-      const areCollaborators = await this.collaboratorService.isCurrentlyCollaborating(senderId, receiverId);
+      const areCollaborators = await this.collaboratorService.isCurrentlyCollaborating(sender.id, receiverId);
 
       const { user: senderUserDetails } = await this.userService.findOneUserById(sender.userId)
 
 
       if (areCollaborators) {
+        console.log('Got here instead 1')
         const ownerOfPost = receiver.fullName.split(' ')
         const alreadyInAConversation = await this.conversationService.isCreated(sender.id, receiver.id)
         if (alreadyInAConversation) {
+          console.log('Got here instead 1.1')
           await this.messageService.createMessage({
             content: content !== '' ? content : `Hello ${ownerOfPost[0]}, I’m interested in working with you.`
           }, senderUserDetails.email, alreadyInAConversation.id)
 
           await prisma.collaboratorRequest.create({
             data: {
-              senderId,
+              senderId: sender.id,
               receiverId,
               postId,
               content: content,
@@ -283,7 +287,7 @@ export class CollaboratorRequestService {
           console.log(newMessage)
           const request = await prisma.collaboratorRequest.create({
             data: {
-              senderId,
+              senderId: sender.id,
               receiverId,
               postId,
               content: content,
@@ -298,9 +302,10 @@ export class CollaboratorRequestService {
           }
         }
       } else {
+        console.log('Got here instead 2')
         const collaboratorsRequest = await prisma.collaboratorRequest.create({
           data: {
-            senderId,
+            senderId: sender.id,
             receiverId,
             postId,
             content: content,

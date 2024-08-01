@@ -49,21 +49,17 @@ export class CollaboratorRequestController {
     @CurrentUser('email') email: string,
     @Body() DTO: CreateCollaboratorRequestDto,
   ) {
-    const { user: sender } = await this.userService.findOneUserByEmail(email);
-    const { user: receiver } = await this.userService.findOneUserById(DTO.receiverId);
+    console.log('Gotten here')
     const { particularPost: postInterested } = await this.postService.findOne(DTO.postId);
 
-    if (!sender || !receiver || !postInterested)
-      return new UnauthorizedException();
+    if (!postInterested) throw new UnauthorizedException();
 
     const response = await this.collaboratorRequestService.create(
-      sender.id,
-      receiver.id,
+      email,
+      DTO.receiverId,
       postInterested.id,
       DTO.content,
     );
-    const payload = { sender, receiver, postInterested };
-    console.log(payload);
     return response;
   }
 

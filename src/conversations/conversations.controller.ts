@@ -24,12 +24,12 @@ export class ConversationsController {
   @UseGuards(FirebaseAuthGuard)
   async getConversations(@CurrentUser('email') email: string) {
     console.log('Reached!')
-    return this.conversationsService.getConversations(email);
+    return await this.conversationsService.getConversations(email);
   }
 
   @Get(':id')
   @UseGuards(FirebaseAuthGuard)
   async getConversationById(@Param('id') id: string) {
-    return this.conversationsService.findById(id);
+    return await this.conversationsService.findById(id);
   }
 }
