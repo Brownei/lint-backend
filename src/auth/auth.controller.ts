@@ -12,6 +12,7 @@ import {
   HttpException,
   UseGuards,
   Body,
+  InternalServerErrorException,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { Response, Request } from 'express';
@@ -93,7 +94,10 @@ export class AuthController {
     );
 
 
-    const { sessionCookie, expiresIn } = await this.authService.createSessionCookie(accessToken)
+    const { sessionCookie, expiresIn, error } = await this.authService.createSessionCookie(accessToken)
+
+    console.log(error)
+    if (error) res.sendStatus(500).json(error);
 
     res.cookie('session', sessionCookie, {
       maxAge: expiresIn,

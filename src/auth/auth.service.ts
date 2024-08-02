@@ -191,6 +191,12 @@ export class AuthService {
       expiresIn,
     });
 
+    if (!sessionCookie) {
+      return {
+        error: new ConflictException('Could not create session cookie')
+      }
+    };
+
     return { sessionCookie, expiresIn };
   }
 
