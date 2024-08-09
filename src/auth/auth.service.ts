@@ -123,8 +123,10 @@ export class AuthService {
     });
 
     if (userInfo) {
-      return { decodedToken, userInfo };
-    }
+      return {
+        error: new ConflictException('User already found!')
+      }
+    };
 
     const newUser = await this.userServices.createANewUser({
       email: decodedToken.email,

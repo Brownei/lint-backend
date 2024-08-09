@@ -30,23 +30,25 @@ export class ProfileService {
       return {
         error: new UserAlreadyExistsException()
       }
-    } else if (!currentUser) {
+    }
+
+    if (!currentUser) {
       return {
         error: new UnauthorizedException()
       }
-    } else {
-      const newProfile = await prisma.profile.create({
-        data: {
-          ...profileDTO,
-          links: profileDTO.links.map((li) => li),
-          userId: currentUser.id,
-        },
-      });
-
-      return {
-        profile: newProfile
-      };
     }
+
+    const newProfile = await prisma.profile.create({
+      data: {
+        ...profileDTO,
+        links: profileDTO.links.map((li) => li),
+        userId: currentUser.id,
+      },
+    });
+
+    return {
+      profile: newProfile
+    };
   }
 
   //GET PROFILE THROUGH ID
