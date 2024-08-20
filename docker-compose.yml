@@ -26,10 +26,10 @@ services:
     restart: always
     ports:
       - 6379:6379
-    environment:
-      - REDIS_PORT=6379
     volumes: 
       - redis:/data
+    networks:
+      - caddy_net
 volumes:
   caddy_data:
   caddy_config:
