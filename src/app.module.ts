@@ -14,11 +14,17 @@ import { AppService } from './app.service';
 import { MessagesModule } from './messages/messages.module';
 import { CollaboratorsModule } from './collaborators/collaborators.module';
 import { MessageAttachmentsModule } from './message-attachments/message-attachments.module';
+import { RedisModule } from 'nestjs-redis-fork';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
+    }),
+    RedisModule.forRoot({
+      config: {
+        url: 'redis://localhost:6379'
+      }
     }),
     EventEmitterModule.forRoot(),
     UsersModule,

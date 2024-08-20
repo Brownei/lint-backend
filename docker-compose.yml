@@ -20,7 +20,16 @@ services:
       - caddy_config:/config
     networks:
       - caddy_net
-
+  redis:
+    image: redis:6.2-alpine
+    container_name: redis
+    restart: always
+    ports:
+      - 6379:6379
+    environment:
+      - REDIS_PORT=6379
+    volumes: 
+      - redis:/data
 volumes:
   caddy_data:
   caddy_config:
