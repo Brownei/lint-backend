@@ -8,6 +8,11 @@ export interface HTTPRequest extends Request {
   user: UserDetails;
 }
 
+type NotificationData = {
+  title: string;
+  body: string;
+}
+
 export interface LoginData {
   email: string;
   password: string;

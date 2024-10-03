@@ -9,9 +9,9 @@ import { MessageException } from './exceptions/MessageException';
 import { prisma } from '../prisma.module';
 import { Conversation, Message, Profile } from '@prisma/client';
 import { SuccessSentException } from '../exceptions/SuccessExceptions';
-import { pusher } from 'src/pusher.module';
 import { MessageAttachmentsService } from 'src/message-attachments/message-attachments.service';
 import { ProfileService } from 'src/users/services/profile.service';
+import { SocketGateway } from 'src/socket/socket.gateway';
 
 @Injectable()
 export class MessagesService {
@@ -22,7 +22,7 @@ export class MessagesService {
     private readonly usersService: UsersService,
     @Inject(ProfileService)
     private readonly profileService: ProfileService,
-
+    private readonly socketGateway: SocketGateway,
     @Inject(CollaboratorsService)
     private readonly collaboratorsService: CollaboratorsService,
     @Inject(MessageAttachmentsService)
@@ -77,13 +77,14 @@ export class MessagesService {
       }
     });
 
-    console.log({ newMessage, profile })
-
     if (createMessageDto.attachments) {
       await this.messageAttachmentsService.create(createMessageDto.attachments, newMessage.id)
     };
 
-    pusher.trigger(conversationId, 'new-message', newMessage);
+    await this.socketGateway.globalWebSocketFunction({
+      conversationId,
+      message: JSON.stringify(newMessage)
+    }, 'new-message')
 
     return {
       messages: newMessage

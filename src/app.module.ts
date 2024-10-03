@@ -15,6 +15,8 @@ import { MessagesModule } from './messages/messages.module';
 import { CollaboratorsModule } from './collaborators/collaborators.module';
 import { MessageAttachmentsModule } from './message-attachments/message-attachments.module';
 import { RedisModule } from 'nestjs-redis-fork';
+import { UtilsModule } from './utils/utils.module';
+import { SocketModule } from './socket/socket.module';
 
 @Module({
   imports: [
@@ -24,18 +26,21 @@ import { RedisModule } from 'nestjs-redis-fork';
     RedisModule.forRoot({
       config: {
         host: 'redis',
+        //host: '127.0.0.1',
         port: 6379
       }
     }),
     EventEmitterModule.forRoot(),
     UsersModule,
     PostsModule,
+    UtilsModule,
     CollaboratorRequestModule,
     AuthModule,
     ConversationsModule,
     MessagesModule,
     CollaboratorsModule,
-    MessageAttachmentsModule
+    MessageAttachmentsModule,
+    SocketModule
   ],
   controllers: [AppController],
   providers: [AppService],

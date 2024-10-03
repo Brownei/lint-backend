@@ -8,14 +8,16 @@ import {
 import { CollaboratorNotFoundException } from './exceptions/CollaboratorNotFound';
 import { DeleteCollaboratorException } from './exceptions/DeleteCollaborator';
 import { prisma } from '../prisma.module';
-import { pusher } from '../pusher.module';
 import { Collaborators } from '@prisma/client';
 import { CollaboratorsReturns } from 'src/utils/types/types';
 import { UserNotFoundException } from 'src/users/exceptions/UserNotFound';
+import { SocketGateway } from 'src/socket/socket.gateway';
 
 @Injectable()
 export class CollaboratorsService {
-  constructor() { }
+  constructor(
+    private readonly socketGateway: SocketGateway
+  ) { }
 
   async createCollaborators(senderId: number, receiverId: number): Promise<{
     success?: HttpException;
@@ -31,15 +33,11 @@ export class CollaboratorsService {
         error: new ConflictException('You guys are currently collaborating')
       }
 
-    const collaborators = await prisma.collaborators.create({
+    await prisma.collaborators.create({
       data: {
         receiverId,
         senderId,
       },
-    });
-
-    pusher.trigger('collaborators', 'new-collaborator', {
-      message: JSON.stringify(collaborators),
     });
 
     return {

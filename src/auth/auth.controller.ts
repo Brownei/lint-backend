@@ -44,7 +44,7 @@ export class AuthController {
 
     try {
       const { userInfo } =
-        await this.authService.verifyAndUpdateUser(accessToken);
+        await this.authService.verifyAndCreateUser(accessToken);
 
       const { sessionCookie, expiresIn } =
         await this.authService.createSessionCookie(accessToken);

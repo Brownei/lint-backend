@@ -14,7 +14,6 @@ import { CreateMessageDto } from './dto/create-message.dto';
 import { CurrentUser } from '../auth/guard/auth.guard';
 import { EmptyMessageException } from './exceptions/EmptyMessageException';
 import { EditMessageDto } from './dto/edit-message.dto';
-import { pusher } from '../pusher.module';
 import { FirebaseAuthGuard } from 'src/auth/guard/firebase.guard';
 
 @Controller('messages')
@@ -31,13 +30,7 @@ export class MessagesController {
     const { content, attachments } = createMessageDto;
     if (!attachments && !content) return new EmptyMessageException();
 
-    pusher.trigger(
-      String(conversationId),
-      'incoming-message',
-      createMessageDto,
-    );
-
-    await this.messagesService.createMessage(
+    return await this.messagesService.createMessage(
       createMessageDto,
       email,
       conversationId,

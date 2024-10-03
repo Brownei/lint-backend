@@ -94,14 +94,11 @@ export class CollaboratorRequestController {
     @Param('id', ParseUUIDPipe) id: string,
     @Body() DTO: UpdateCollaboratorRequestDto,
   ) {
-    const { user: receiver } = await this.userService.findOneUserByEmail(email);
-
-    if (!receiver) return new UnauthorizedException();
 
     const response = await this.collaboratorRequestService.accept(
       DTO,
       id,
-      receiver.id,
+      email,
     );
     return response;
   }
@@ -109,10 +106,10 @@ export class CollaboratorRequestController {
   @Patch(':id/reject')
   @UseGuards(FirebaseAuthGuard)
   async rejectFriendRequest(
-    @CurrentUser('id') userId: number,
+    @CurrentUser('email') email: string,
     @Param('id', ParseUUIDPipe) id: string,
   ) {
-    const response = await this.collaboratorRequestService.reject(id, userId);
+    const response = await this.collaboratorRequestService.reject(id, email);
     return response;
   }
 }

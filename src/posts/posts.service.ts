@@ -10,8 +10,8 @@ import { UsersService } from '../users/services/users.service';
 import { PostNotFoundException } from './exceptions/PostNotFoundException';
 import { prisma } from '../prisma.module';
 import { ProfileService } from '../users/services/profile.service';
-import { pusher } from 'src/pusher.module';
 import { PostReturns } from 'src/utils/types/types';
+import { SocketGateway } from 'src/socket/socket.gateway';
 
 @Injectable()
 export class PostsService {
@@ -20,6 +20,7 @@ export class PostsService {
     private readonly usersService: UsersService,
     @Inject(ProfileService)
     private readonly profileService: ProfileService,
+    private readonly socketGateway: SocketGateway
   ) { }
   async create(createPostDto: CreatePostDto, email: string): Promise<{
     error?: Error
@@ -43,7 +44,7 @@ export class PostsService {
       },
     });
 
-    await pusher.trigger('posts', 'all-posts', newPost);
+    await this.socketGateway.globalAllWebSocketFunction(newPost, 'new-post')
 
     return {
       success: new HttpException('Created', HttpStatus.CREATED)

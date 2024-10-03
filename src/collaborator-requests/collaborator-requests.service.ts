@@ -17,13 +17,13 @@ import {
 import { CollaboratorNotFoundException } from '../collaborators/exceptions/CollaboratorNotFound';
 import { UpdateCollaboratorRequestDto } from './dto/update-collaboration-requests.dto';
 import { prisma } from '../prisma.module';
-import { pusher } from 'src/pusher.module';
 import { ProfileService } from 'src/users/services/profile.service';
 import { CollaboratorRequest } from '@prisma/client';
 import { CollaboratorsRequestDetails, CollaboratorsRequestReturns } from 'src/utils/types/types';
 import { UserNotFoundException } from 'src/users/exceptions/UserNotFound';
 import { MessagesService } from 'src/messages/messages.service';
 import { ConversationsService } from 'src/conversations/conversations.service';
+import { SocketGateway } from 'src/socket/socket.gateway';
 
 @Injectable()
 export class CollaboratorRequestService {
@@ -38,7 +38,7 @@ export class CollaboratorRequestService {
     private readonly messageService: MessagesService,
     @Inject(ConversationsService)
     private readonly conversationService: ConversationsService,
-
+    private readonly socketGateway: SocketGateway
   ) { }
 
   async isPending(userId: number, postId: string, receiverId: number): Promise<CollaboratorRequest> {
@@ -196,6 +196,7 @@ export class CollaboratorRequestService {
         },
         sender: {
           select: {
+            id: true,
             occupation: true,
             fullName: true,
             username: true,
@@ -236,19 +237,15 @@ export class CollaboratorRequestService {
         return {
           error: new CollaboratorException('Nothing like this here!')
         }
-      }
-
-      console.log(sender, receiver)
-
-      if (curentlyPending)
+      } else if (curentlyPending) {
         return {
           error: new CollaboratorException('Collaborator Requesting Pending')
         }
-
-      if (receiverId === sender.id)
+      } else if (receiverId === sender.id) {
         return {
           error: new CollaboratorException('Cannot Collaborate With Yourself')
         }
+      }
 
       const areCollaborators = await this.collaboratorService.isCurrentlyCollaborating(sender.id, receiverId);
 
@@ -333,11 +330,12 @@ export class CollaboratorRequestService {
           },
         });
 
-        await pusher.trigger(
-          String(receiverId),
-          'incoming_collaborator_requests',
-          collaboratorsRequest,
-        );
+
+        await this.socketGateway.globalSingleWebSocketFunction({
+          userId: String(receiver.id),
+          message: JSON.stringify(collaboratorsRequest)
+        }, 'new-request')
+
 
         return {
           collaboratorsRequest
@@ -352,30 +350,42 @@ export class CollaboratorRequestService {
     }
   }
 
-  async accept(DTO: UpdateCollaboratorRequestDto, id: string, userId: number): Promise<{
+  async accept(DTO: UpdateCollaboratorRequestDto, requestId: string, email: string): Promise<{
     error?: Error
     success?: HttpException
   }> {
-    const collaboratorRequest = await this.findById(id);
-    const { user: sender } = await this.userService.findOneUserById(DTO.senderId);
+    const { user } = await this.userService.findOneUserByEmail(email);
+
+    if (!user) {
+      return {
+        error: new UnauthorizedException()
+      }
+    }
     const currentUser =
-      await this.profileService.getSomeoneProfileThroughId(userId);
+      await this.profileService.getSomeoneProfileThroughId(user.id);
 
-    if (!sender || !currentUser) return {
-      error: new UnauthorizedException()
-    }
+    const collaboratorRequest = await this.findById(requestId);
+    const { profile: sender } = await this.profileService.getSomeoneProfileThroughId(DTO.senderId);
 
-    if (!collaboratorRequest) return {
-      error: new CollaboratorNotFoundException()
-    }
-    if (collaboratorRequest.status === 'accepted')
+    if (!sender || !currentUser) {
+      return {
+        error: new UnauthorizedException()
+      }
+    } else if (!collaboratorRequest) {
+      return {
+        error: new CollaboratorNotFoundException()
+      }
+    } else if (collaboratorRequest.status === 'accepted') {
       return {
         error: new CollaboratorException('Collaborator Request Already Accepted')
       }
-    if (collaboratorRequest.sender?.id === userId)
+    }
+
+    if (collaboratorRequest.sender?.id === currentUser.profile.id) {
       return {
         error: new CollaboratorException('You cannot accept your own request')
       }
+    }
 
     const acceptedRequest = await prisma.collaboratorRequest.update({
       where: {
@@ -386,9 +396,19 @@ export class CollaboratorRequestService {
       },
     });
 
-    await this.collaboratorService.createCollaborators(sender.id, userId)
+    await this.collaboratorService.createCollaborators(sender.id, currentUser.profile.id)
 
-    await pusher.trigger(collaboratorRequest.id, 'incoming_collaborator_requests', acceptedRequest)
+    await Promise.all([
+      this.socketGateway.globalSingleWebSocketFunction({
+        userId: String(currentUser.profile.id),
+        message: JSON.stringify(acceptedRequest)
+      }, 'accepted-request'),
+
+      this.socketGateway.globalSingleWebSocketFunction({
+        userId: String(collaboratorRequest.sender.id),
+        message: JSON.stringify(acceptedRequest)
+      }, 'accepted-request')
+    ])
 
     return {
       success: new SuccessAcceptedException()
@@ -396,22 +416,34 @@ export class CollaboratorRequestService {
 
   }
 
-  async reject(id: string, userId: number): Promise<{
+  async reject(requestId: string, email: string): Promise<{
     error?: Error
     success?: HttpException
   }> {
-    const collaboratorRequest = await this.findById(id);
+    const { user } = await this.userService.findOneUserByEmail(email);
+
+    const currentUser =
+      await this.profileService.getSomeoneProfileThroughId(user.id);
+
+    if (!user) {
+      return {
+        error: new UnauthorizedException()
+      }
+    }
+
+    const collaboratorRequest = await this.findById(requestId);
     if (!collaboratorRequest) return {
       error: new CollaboratorNotFoundException()
     }
-    if (collaboratorRequest.status === 'accepted')
+    if (collaboratorRequest.status === 'accepted') {
       return {
         error: new CollaboratorException('Collaborator Request Already Accepted')
       }
-    if (collaboratorRequest.receiver.id !== userId)
+    } else if (collaboratorRequest.sender.id === currentUser.profile.id) {
       return {
         error: new CollaboratorException('You cannot reject your own request')
       }
+    }
 
     const rejectedRequest = await prisma.collaboratorRequest.update({
       where: {
@@ -422,9 +454,18 @@ export class CollaboratorRequestService {
       },
     });
 
-    pusher.trigger('collaborator-request', 'reject', {
-      message: JSON.stringify(rejectedRequest),
-    });
+    await Promise.all([
+      this.socketGateway.globalSingleWebSocketFunction({
+        userId: String(currentUser.profile.id),
+        message: JSON.stringify(rejectedRequest)
+      }, 'rejected-request'),
+
+      this.socketGateway.globalSingleWebSocketFunction({
+        userId: String(collaboratorRequest.sender.id),
+        message: JSON.stringify(rejectedRequest)
+      }, 'rejected-request')
+
+    ])
 
     return {
       success: new SuccessRejectedException()
