@@ -44,6 +44,15 @@ model Profile {
   userId                      Int                   @unique
   User                        User                  @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   createdAt                   DateTime              @default(now()) @db.Timestamp(6)
+  notification                Notification[]
+}
+
+model Notification {
+  id        String              @id @default(uuid())
+  requestId String
+  request   CollaboratorRequest @relation(fields: [requestId], references: [id])
+  userId    Int                 @unique
+  user      Profile             @relation(fields: [userId], references: [id])
 }
 
 model Post {
@@ -86,16 +95,17 @@ model Conversation {
 }
 
 model CollaboratorRequest {
-  id         String   @id @default(uuid())
-  senderId   Int
-  sender     Profile  @relation("collaboratorRequestSender", fields: [senderId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  receiverId Int
-  receiver   Profile  @relation("collaboratorRequestReceiver", fields: [receiverId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  postId     String
-  post       Post     @relation(fields: [postId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  content    String
-  createdAt  DateTime @default(now()) @db.Timestamp(6)
-  status     Status
+  id           String         @id @default(uuid())
+  senderId     Int
+  sender       Profile        @relation("collaboratorRequestSender", fields: [senderId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  receiverId   Int
+  receiver     Profile        @relation("collaboratorRequestReceiver", fields: [receiverId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  postId       String
+  post         Post           @relation(fields: [postId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  content      String
+  createdAt    DateTime       @default(now()) @db.Timestamp(6)
+  status       Status
+  notification Notification[]
 }
 
 model Collaborators {

@@ -256,6 +256,7 @@ export class CollaboratorRequestService {
         console.log('Got here instead 1')
         const ownerOfPost = receiver.fullName.split(' ')
         const alreadyInAConversation = await this.conversationService.isCreated(sender.id, receiver.id)
+
         if (alreadyInAConversation) {
           console.log('Got here instead 1.1')
           await this.messageService.createMessage({
@@ -271,28 +272,29 @@ export class CollaboratorRequestService {
               status: 'accepted'
             }
           })
+
           return {
             success: new HttpException('Message sent!', HttpStatus.CREATED)
           }
 
         } else {
           const { newConversation } = await this.conversationService.createConversation(senderUserDetails.email, { fullName: receiver.fullName })
-          const newMessage = await this.messageService.createMessage({
-            content: content !== '' ? content : `Hello ${ownerOfPost[0]}, I’m interested in working with you.`
-          }, senderUserDetails.email, newConversation.id)
 
-          console.log(newMessage)
-          const request = await prisma.collaboratorRequest.create({
-            data: {
-              senderId: sender.id,
-              receiverId,
-              postId,
-              content: content,
-              status: 'accepted'
-            }
-          })
+          await Promise.all([
+            this.messageService.createMessage({
+              content: content !== '' ? content : `Hello ${ownerOfPost[0]}, I’m interested in working with you.`
+            }, senderUserDetails.email, newConversation.id),
 
-          console.log({ request })
+            prisma.collaboratorRequest.create({
+              data: {
+                senderId: sender.id,
+                receiverId,
+                postId,
+                content: content,
+                status: 'accepted'
+              }
+            })
+          ])
 
           return {
             success: new HttpException('Message sent!', HttpStatus.CREATED)
@@ -331,11 +333,19 @@ export class CollaboratorRequestService {
         });
 
 
-        await this.socketGateway.globalSingleWebSocketFunction({
-          userId: String(receiver.id),
-          message: JSON.stringify(collaboratorsRequest)
-        }, 'new-request')
+        await Promise.all([
+          this.socketGateway.globalSingleWebSocketFunction({
+            userId: String(receiver.id),
+            message: JSON.stringify(collaboratorsRequest)
+          }, 'new-request'),
 
+          prisma.notification.create({
+            data: {
+              requestId: collaboratorsRequest.id,
+              userId: receiverId
+            }
+          })
+        ])
 
         return {
           collaboratorsRequest
@@ -407,7 +417,14 @@ export class CollaboratorRequestService {
       this.socketGateway.globalSingleWebSocketFunction({
         userId: String(collaboratorRequest.sender.id),
         message: JSON.stringify(acceptedRequest)
-      }, 'accepted-request')
+      }, 'accepted-request'),
+
+      prisma.notification.create({
+        data: {
+          requestId: requestId,
+          userId: sender.id,
+        }
+      })
     ])
 
     return {
@@ -463,7 +480,14 @@ export class CollaboratorRequestService {
       this.socketGateway.globalSingleWebSocketFunction({
         userId: String(collaboratorRequest.sender.id),
         message: JSON.stringify(rejectedRequest)
-      }, 'rejected-request')
+      }, 'rejected-request'),
+
+      prisma.notification.create({
+        data: {
+          requestId: collaboratorRequest.id,
+          userId: collaboratorRequest.sender.id
+        }
+      })
 
     ])
 

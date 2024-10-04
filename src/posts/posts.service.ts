@@ -44,7 +44,7 @@ export class PostsService {
       },
     });
 
-    await this.socketGateway.globalAllWebSocketFunction(newPost, 'new-post')
+    await this.socketGateway.globalAllWebSocketFunction(JSON.stringify(newPost), 'new-post')
 
     return {
       success: new HttpException('Created', HttpStatus.CREATED)

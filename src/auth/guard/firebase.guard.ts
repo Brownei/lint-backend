@@ -3,6 +3,7 @@ import {
   ExecutionContext,
   Injectable,
   Logger,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { type Request } from 'express';
 import { admin } from '../firebase-admin.module';
@@ -41,26 +42,29 @@ export class FirebaseAuthGuard implements CanActivate {
       sessionCookie = token;
     }
 
-    if (!sessionCookie) return false;
+    if (!sessionCookie) {
+      throw new UnauthorizedException('Unauthorized access!')
+    };
 
     try {
       const decodedClaims = await admin
         .auth()
         .verifySessionCookie(sessionCookie);
 
-      if (!decodedClaims) return false;
+      if (!decodedClaims) {
+        throw new UnauthorizedException('Unauthorized access!')
+      };
 
       request.user = {
         email: decodedClaims.email,
         id: decodedClaims.uid,
       };
 
-      // this.logger.log('Paassed!');
-      return true;
+      return true
     } catch (_error) {
       this.logger.log('Unauthorized!');
       console.log(_error);
-      return false;
+      throw new UnauthorizedException('Unauthorized access!')
     }
   }
 }

@@ -17,6 +17,7 @@ import { MessageAttachmentsModule } from './message-attachments/message-attachme
 import { RedisModule } from 'nestjs-redis-fork';
 import { UtilsModule } from './utils/utils.module';
 import { SocketModule } from './socket/socket.module';
+import { NotificationsModule } from './notifications/notifications.module';
 
 @Module({
   imports: [
@@ -25,8 +26,8 @@ import { SocketModule } from './socket/socket.module';
     }),
     RedisModule.forRoot({
       config: {
-        host: 'redis',
-        //host: '127.0.0.1',
+        //host: 'redis',
+        host: '127.0.0.1',
         port: 6379
       }
     }),
@@ -40,7 +41,8 @@ import { SocketModule } from './socket/socket.module';
     MessagesModule,
     CollaboratorsModule,
     MessageAttachmentsModule,
-    SocketModule
+    SocketModule,
+    NotificationsModule
   ],
   controllers: [AppController],
   providers: [AppService],

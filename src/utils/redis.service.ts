@@ -22,16 +22,20 @@ export class CustomRedisService {
         console.log(conversationIds)
         await this.redis.set(userId, client.id)
         await this.redis.hset(this.onlineUsers, userId, client.id);
-        for (const conversationId of conversationIds) {
-          await this.redis.hset(`Conversation:${conversationId}`, userId, client.id);
+        if (conversationIds.length > 0) {
+          for (const conversationId of conversationIds) {
+            await this.redis.hset(`Conversation:${conversationId}`, userId, client.id);
+          }
         }
       });
     } else {
       const { userId, conversationIds } = parsedParams
       await this.redis.set(userId, client.id)
       await this.redis.hset(this.onlineUsers, userId, client.id);
-      for (const conversationId of conversationIds) {
-        await this.redis.hset(`Conversation:${conversationId}`, userId, client.id);
+      if (conversationIds.length > 0) {
+        for (const conversationId of conversationIds) {
+          await this.redis.hset(`Conversation:${conversationId}`, userId, client.id);
+        }
       }
     }
   }
@@ -42,16 +46,20 @@ export class CustomRedisService {
         // Remove the user from Redis
         await this.redis.del(userId)
         await this.redis.hdel(this.onlineUsers, userId);
-        for (const conversationId of conversationIds) {
-          await this.redis.hdel(`Conversation:${conversationId}`, userId);
+        if (conversationIds.length > 0) {
+          for (const conversationId of conversationIds) {
+            await this.redis.hdel(`Conversation:${conversationId}`, userId);
+          }
         }
       });
     } else {
       const { userId, conversationIds } = parsedParams
       await this.redis.del(userId)
       await this.redis.hdel(this.onlineUsers, userId);
-      for (const conversationId of conversationIds) {
-        await this.redis.hdel(`Conversation:${conversationId}`, userId);
+      if (conversationIds.length > 0) {
+        for (const conversationId of conversationIds) {
+          await this.redis.hdel(`Conversation:${conversationId}`, userId);
+        }
       }
     }
   }
