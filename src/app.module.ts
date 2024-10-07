@@ -18,6 +18,8 @@ import { RedisModule } from 'nestjs-redis-fork';
 import { UtilsModule } from './utils/utils.module';
 import { SocketModule } from './socket/socket.module';
 import { NotificationsModule } from './notifications/notifications.module';
+import { APP_GUARD } from '@nestjs/core';
+import { FirebaseAuthGuard } from './auth/guard/firebase.guard';
 
 @Module({
   imports: [
@@ -45,7 +47,13 @@ import { NotificationsModule } from './notifications/notifications.module';
     NotificationsModule
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [
+    AppService,
+    {
+      provide: APP_GUARD,
+      useClass: FirebaseAuthGuard,
+    },
+  ],
 })
 export class AppModule {
   constructor() { }

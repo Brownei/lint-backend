@@ -98,8 +98,22 @@ export class CollaboratorRequestService {
         id: true,
         status: true,
         post: true,
-        receiver: true,
-        sender: true,
+        receiver: {
+          select: {
+            id: true,
+            fullName: true,
+            profileImage: true,
+            userId: true,
+          }
+        },
+        sender: {
+          select: {
+            id: true,
+            fullName: true,
+            profileImage: true,
+            userId: true,
+          }
+        },
       },
     });
 
@@ -247,9 +261,7 @@ export class CollaboratorRequestService {
         }
       }
 
-      const areCollaborators = await this.collaboratorService.isCurrentlyCollaborating(sender.id, receiverId);
-
-      const { user: senderUserDetails } = await this.userService.findOneUserById(sender.userId)
+      const areCollaborators = await this.collaboratorService.isCurrentlyCollaborating(sender.id, receiver.id);
 
 
       if (areCollaborators) {
@@ -261,12 +273,12 @@ export class CollaboratorRequestService {
           console.log('Got here instead 1.1')
           await this.messageService.createMessage({
             content: content !== '' ? content : `Hello ${ownerOfPost[0]}, I’m interested in working with you.`
-          }, senderUserDetails.email, alreadyInAConversation.id)
+          }, sender.id, alreadyInAConversation.id)
 
           await prisma.collaboratorRequest.create({
             data: {
               senderId: sender.id,
-              receiverId,
+              receiverId: receiver.id,
               postId,
               content: content,
               status: 'accepted'
@@ -278,17 +290,17 @@ export class CollaboratorRequestService {
           }
 
         } else {
-          const { newConversation } = await this.conversationService.createConversation(senderUserDetails.email, { fullName: receiver.fullName })
+          const { newConversation } = await this.conversationService.createConversation(sender.id, { receiverId: receiver.id })
 
           await Promise.all([
             this.messageService.createMessage({
               content: content !== '' ? content : `Hello ${ownerOfPost[0]}, I’m interested in working with you.`
-            }, senderUserDetails.email, newConversation.id),
+            }, sender.id, newConversation.id),
 
             prisma.collaboratorRequest.create({
               data: {
                 senderId: sender.id,
-                receiverId,
+                receiverId: receiver.id,
                 postId,
                 content: content,
                 status: 'accepted'
@@ -305,7 +317,7 @@ export class CollaboratorRequestService {
         const collaboratorsRequest = await prisma.collaboratorRequest.create({
           data: {
             senderId: sender.id,
-            receiverId,
+            receiverId: receiver.id,
             postId,
             content: content,
             status: 'pending',
@@ -342,7 +354,9 @@ export class CollaboratorRequestService {
           prisma.notification.create({
             data: {
               requestId: collaboratorsRequest.id,
-              userId: receiverId
+              senderId: sender.id,
+              receiverId: receiver.id,
+              action: 'creatingRequest'
             }
           })
         ])
@@ -375,7 +389,7 @@ export class CollaboratorRequestService {
       await this.profileService.getSomeoneProfileThroughId(user.id);
 
     const collaboratorRequest = await this.findById(requestId);
-    const { profile: sender } = await this.profileService.getSomeoneProfileThroughId(DTO.senderId);
+    const { profile: sender } = await this.profileService.getSomeoneProfileThroughId(collaboratorRequest.sender.id);
 
     if (!sender || !currentUser) {
       return {
@@ -419,10 +433,16 @@ export class CollaboratorRequestService {
         message: JSON.stringify(acceptedRequest)
       }, 'accepted-request'),
 
+      this.conversationService.createConversation(sender.id, {
+        receiverId: currentUser.profile.id
+      }),
+
       prisma.notification.create({
         data: {
           requestId: requestId,
-          userId: sender.id,
+          senderId: currentUser.profile.id,
+          receiverId: collaboratorRequest.sender.id,
+          action: 'acceptingRequest'
         }
       })
     ])
@@ -485,7 +505,9 @@ export class CollaboratorRequestService {
       prisma.notification.create({
         data: {
           requestId: collaboratorRequest.id,
-          userId: collaboratorRequest.sender.id
+          receiverId: collaboratorRequest.sender.id,
+          senderId: currentUser.profile.id,
+          action: 'rejectingRequest'
         }
       })
 

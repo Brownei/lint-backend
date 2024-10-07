@@ -44,15 +44,19 @@ model Profile {
   userId                      Int                   @unique
   User                        User                  @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   createdAt                   DateTime              @default(now()) @db.Timestamp(6)
-  notification                Notification[]
+  senderNotifications         Notification[]        @relation("NotificationSender")
+  receiverNotifications       Notification[]        @relation("NotificationReceiver")
 }
 
 model Notification {
-  id        String              @id @default(uuid())
-  requestId String
-  request   CollaboratorRequest @relation(fields: [requestId], references: [id])
-  userId    Int                 @unique
-  user      Profile             @relation(fields: [userId], references: [id])
+  id         String              @id @default(uuid())
+  action     Action
+  requestId  String
+  request    CollaboratorRequest @relation(fields: [requestId], references: [id])
+  senderId   Int                 @unique
+  sender     Profile             @relation("NotificationSender", fields: [senderId], references: [id])
+  receiverId Int                 @unique
+  receiver   Profile             @relation("NotificationReceiver", fields: [receiverId], references: [id])
 }
 
 model Post {
@@ -123,6 +127,8 @@ enum Status {
   rejected
 }
 
-enum Help {
-  Omom
+enum Action {
+  acceptingRequest
+  rejectingRequest
+  creatingRequest
 }

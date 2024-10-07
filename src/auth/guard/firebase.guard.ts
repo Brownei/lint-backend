@@ -9,6 +9,8 @@ import { type Request } from 'express';
 import { admin } from '../firebase-admin.module';
 import { Reflector } from '@nestjs/core';
 import { IS_PUBLIC_KEY } from '../../decorators/public.decorator';
+import { JwtService } from '@nestjs/jwt';
+import { prisma } from 'src/prisma.module';
 
 export type ReqWithUser = Request & {
   user: {
@@ -33,6 +35,7 @@ export class FirebaseAuthGuard implements CanActivate {
     if (isPublic) {
       return true;
     }
+
     const request = context.switchToHttp().getRequest();
 
     const [type, token] = request.headers.authorization?.split(' ') ?? [];
@@ -47,23 +50,32 @@ export class FirebaseAuthGuard implements CanActivate {
     };
 
     try {
-      const decodedClaims = await admin
-        .auth()
-        .verifySessionCookie(sessionCookie);
+      const decodedClaims = new JwtService().verify(token, {
+        secret: process.env.JWT_SECRET
+      });
 
       if (!decodedClaims) {
-        throw new UnauthorizedException('Unauthorized access!')
+        throw new UnauthorizedException('Token has been expired')
       };
 
+      const user = await prisma.user.findUnique({
+        where: {
+          id: decodedClaims.uid
+        },
+        select: {
+          id: true,
+          email: true
+        }
+      })
+
       request.user = {
-        email: decodedClaims.email,
-        id: decodedClaims.uid,
+        email: user.email,
+        id: user.id,
       };
 
       return true
     } catch (_error) {
       this.logger.log('Unauthorized!');
-      console.log(_error);
       throw new UnauthorizedException('Unauthorized access!')
     }
   }

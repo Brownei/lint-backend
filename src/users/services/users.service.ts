@@ -24,7 +24,8 @@ export class UsersService {
     user?: UserReturns
     error?: Error
   }> {
-    const hashedPassword = await bcrypt.hash(createUserDto.password, 10);
+    const salt = await bcrypt.genSalt(10)
+    const hashedPassword = await bcrypt.hash(createUserDto.password, salt);
     const existingUser = await prisma.user.findUnique({
       where: {
         email: createUserDto.email,

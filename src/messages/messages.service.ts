@@ -31,7 +31,7 @@ export class MessagesService {
 
   async createMessage(
     createMessageDto: CreateMessageDto,
-    email: string,
+    id: number,
     conversationId: string,
   ): Promise<{
     error?: Error
@@ -40,7 +40,7 @@ export class MessagesService {
     const conversation =
       await this.conversationService.findById(conversationId);
 
-    const { profile } = await this.profileService.getProfileThroughUserEmail(email);
+    const { profile } = await this.profileService.getSomeoneProfileThroughId(id);
 
     if (!conversation) return {
       error: new ConversationNotFoundException()
@@ -100,9 +100,25 @@ export class MessagesService {
       },
       include: {
         conversation: {
-          select: {
-            recipient: true,
-            creator: true
+          include: {
+            creator: {
+              select: {
+                fullName: true,
+                profileImage: true,
+                occupation: true,
+                id: true,
+                username: true
+              }
+            },
+            recipient: {
+              select: {
+                fullName: true,
+                occupation: true,
+                id: true,
+                username: true,
+                profileImage: true
+              }
+            }
           }
         }
       },

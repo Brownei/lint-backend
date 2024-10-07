@@ -2,7 +2,7 @@
 CREATE TYPE "Status" AS ENUM ('accepted', 'pending', 'rejected');
 
 -- CreateEnum
-CREATE TYPE "Help" AS ENUM ('Omom');
+CREATE TYPE "Action" AS ENUM ('acceptingRequest', 'rejectingRequest', 'creatingRequest');
 
 -- CreateTable
 CREATE TABLE "User" (
@@ -35,8 +35,10 @@ CREATE TABLE "Profile" (
 -- CreateTable
 CREATE TABLE "Notification" (
     "id" TEXT NOT NULL,
+    "action" "Action" NOT NULL,
     "requestId" TEXT NOT NULL,
-    "userId" INTEGER NOT NULL,
+    "senderId" INTEGER NOT NULL,
+    "receiverId" INTEGER NOT NULL,
 
     CONSTRAINT "Notification_pkey" PRIMARY KEY ("id")
 );
@@ -116,7 +118,10 @@ CREATE UNIQUE INDEX "Profile_username_key" ON "Profile"("username");
 CREATE UNIQUE INDEX "Profile_userId_key" ON "Profile"("userId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "Notification_userId_key" ON "Notification"("userId");
+CREATE UNIQUE INDEX "Notification_senderId_key" ON "Notification"("senderId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "Notification_receiverId_key" ON "Notification"("receiverId");
 
 -- AddForeignKey
 ALTER TABLE "Profile" ADD CONSTRAINT "Profile_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE NO ACTION ON UPDATE NO ACTION;
@@ -125,7 +130,10 @@ ALTER TABLE "Profile" ADD CONSTRAINT "Profile_userId_fkey" FOREIGN KEY ("userId"
 ALTER TABLE "Notification" ADD CONSTRAINT "Notification_requestId_fkey" FOREIGN KEY ("requestId") REFERENCES "CollaboratorRequest"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Notification" ADD CONSTRAINT "Notification_userId_fkey" FOREIGN KEY ("userId") REFERENCES "Profile"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "Notification" ADD CONSTRAINT "Notification_senderId_fkey" FOREIGN KEY ("senderId") REFERENCES "Profile"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Notification" ADD CONSTRAINT "Notification_receiverId_fkey" FOREIGN KEY ("receiverId") REFERENCES "Profile"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "Post" ADD CONSTRAINT "Post_profileId_fkey" FOREIGN KEY ("profileId") REFERENCES "Profile"("id") ON DELETE NO ACTION ON UPDATE NO ACTION;

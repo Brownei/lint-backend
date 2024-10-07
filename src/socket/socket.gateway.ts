@@ -64,7 +64,15 @@ export class SocketGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   async globalAllWebSocketFunction(payload: any, emitString: string) {
     try {
-      this.server.emit(emitString, payload);
+      const usersInRoom = await this.redisService.getOnlineUsersInAConversation(payload.conversationId);
+
+      // Send the message to each user in the room
+      Object.values(usersInRoom).forEach(socketId => {
+        console.log({ socketId })
+        this.server.to(socketId).emit(emitString, payload);
+      });
+
+      //this.server.emit(emitString, payload);
     } catch (error) {
       this.logger.error(`Couldnt send to ${emitString}: `, error)
     }

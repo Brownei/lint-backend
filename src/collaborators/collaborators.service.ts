@@ -72,6 +72,7 @@ export class CollaboratorsService {
       select: {
         receiver: {
           select: {
+            id: true,
             profileImage: true,
             fullName: true,
             occupation: true
@@ -79,6 +80,7 @@ export class CollaboratorsService {
         },
         sender: {
           select: {
+            id: true,
             profileImage: true,
             fullName: true,
             occupation: true

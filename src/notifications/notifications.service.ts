@@ -9,10 +9,30 @@ export class NotificationsService {
   ) { }
 
   async findAll(email: string) {
-    const currentUser = await this.profileService.getProfileThroughUserEmail(email)
+    const { profile } = await this.profileService.getProfileThroughUserEmail(email)
     return await prisma.notification.findMany({
       where: {
-        userId: currentUser.profile.id
+        receiverId: profile.id
+      },
+      include: {
+        receiver: {
+          select: {
+            fullName: true,
+            profileImage: true
+          }
+        },
+        sender: {
+          select: {
+            fullName: true,
+            profileImage: true
+          }
+        },
+        request: {
+          select: {
+            id: true,
+            postId: true
+          }
+        }
       }
     })
   }
@@ -21,6 +41,26 @@ export class NotificationsService {
     const particularNotification = await prisma.notification.findUnique({
       where: {
         id
+      },
+      include: {
+        receiver: {
+          select: {
+            fullName: true,
+            profileImage: true
+          }
+        },
+        sender: {
+          select: {
+            fullName: true,
+            profileImage: true
+          }
+        },
+        request: {
+          select: {
+            id: true,
+            postId: true
+          }
+        }
       }
     })
 

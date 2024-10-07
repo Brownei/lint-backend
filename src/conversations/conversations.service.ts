@@ -60,16 +60,16 @@ export class ConversationsService {
   }
 
   async createConversation(
-    email: string,
+    id: number,
     createConversationpayload: CreateConversationDto,
   ): Promise<{
     error?: Error
     newConversation?: Conversation
   }> {
-    const { user: creator } =
-      await this.userService.findOneUserByEmailAndGetSomeData(email);
-    const { fullName } = createConversationpayload;
-    const { user: recipient } = await this.userService.findOneUserByFullName(fullName);
+    const { profile: creator } =
+      await this.profileService.getSomeoneProfileThroughId(id);
+    const { receiverId } = createConversationpayload;
+    const { profile: recipient } = await this.profileService.getSomeoneProfileThroughId(receiverId);
 
     if (!recipient) return {
       error: new UserNotFoundException()

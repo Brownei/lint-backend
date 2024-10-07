@@ -13,11 +13,15 @@ import { UsersService } from '../users/services/users.service';
 import { prisma } from '../prisma.module';
 import { CreateUserDto } from 'src/users/dto/create-user.dto';
 import * as bcrypt from 'bcrypt';
+import { UserSigninDTO } from './auth.dto';
+import { JwtService } from '@nestjs/jwt';
 
 @Injectable()
 export class AuthService {
-  constructor(private readonly userServices: UsersService) { }
-
+  constructor(
+    private readonly userServices: UsersService,
+    private readonly jwtService: JwtService
+  ) { }
   async verifyAndUpdateUser(accessToken: string): Promise<{
     decodedToken?: DecodedIdToken;
     error?: Error;
@@ -50,25 +54,11 @@ export class AuthService {
     };
   }
 
-  async verifyandUpdateUserWithEmailAndPassword(accessToken: string, loginDetails: LoginData): Promise<{
-    decodedToken?: DecodedIdToken;
+  async signIn(loginDetails: UserSigninDTO): Promise<{
+    sessionCookie?: string;
     userInfo?: UserReturns;
     error?: Error
   }> {
-    const decodedToken = await admin.auth().verifyIdToken(accessToken);
-
-    if (!decodedToken) {
-      return {
-        decodedToken: null,
-        userInfo: null,
-        error: new ConflictException('check your network!')
-      };
-    }
-
-    if (decodedToken.email !== loginDetails.email) return {
-      error: new ConflictException('check your network!')
-
-    }
     const user = await prisma.user.findUnique({
       where: {
         email: loginDetails.email,
@@ -91,115 +81,88 @@ export class AuthService {
     }
 
     const passwordMatch = await bcrypt.compare(loginDetails.password, user.password)
+    console.log(passwordMatch)
 
-    if (!passwordMatch) return {
-      error: new UnauthorizedException('Incorrect password')
+    if (!passwordMatch) {
+      return {
+        error: new UnauthorizedException('Incorrect password')
+      }
     }
 
+    const sessionCookie = this.jwtService.sign(
+      { uid: user.id },
+      {
+        expiresIn: '1d',
+        secret: process.env.JWT_SECRET,
+      },
+    );
+
     const { password, ...otherDetails } = user
-    return { decodedToken, userInfo: otherDetails };
+    return { sessionCookie, userInfo: otherDetails };
   }
 
 
-  async verifyAndCreateUserThroughEmailAndPassword(accessToken: string, createUserDto: CreateUserDto): Promise<{
-    decodedToken?: DecodedIdToken;
+  async signUp(createUserDto: CreateUserDto): Promise<{
+    sessionCookie?: string;
     userInfo?: UserReturns;
     error?: Error
   }> {
-    const decodedToken = await admin.auth().verifyIdToken(accessToken);
-
-    const userInfo = await prisma.user.findUnique({
+    const existingUser = await prisma.user.findUnique({
       where: {
-        email: decodedToken.email,
-      },
-      select: {
-        email: true,
-        emailVerified: true,
-        fullName: true,
-        id: true,
-        profile: true,
-        profileImage: true,
+        email: createUserDto.email,
       },
     });
 
-    if (userInfo) {
+    if (existingUser) {
       return {
         error: new ConflictException('User already found!')
       }
     };
 
-    const newUser = await this.userServices.createANewUser({
-      email: decodedToken.email,
+    await this.userServices.createANewUser({
+      email: createUserDto.email,
       fullName: createUserDto.fullName,
-      profileImage: '',
-      emailVerified: decodedToken.email_verified,
+      profileImage: createUserDto.profileImage,
+      emailVerified: createUserDto.emailVerified,
       password: createUserDto.password
     });
 
-    await admin.auth().setCustomUserClaims(decodedToken.uid, {
-      userId: newUser.user.id,
-    });
+    const { error, userInfo, sessionCookie } = await this.signIn({
+      email: createUserDto.email,
+      password: createUserDto.password
+    })
 
-    return { decodedToken, userInfo: newUser.user };
+    return { sessionCookie, userInfo, error };
   }
 
-  async verifyAndCreateUser(accessToken: string): Promise<{
-    decodedToken?: DecodedIdToken;
+  async signUpWithGoogle(accessToken: string): Promise<{
+    sessionCookie?: string;
     error?: Error;
     userInfo?: UserReturns;
   }> {
     const decodedToken = await admin.auth().verifyIdToken(accessToken);
+    const userData = await admin.auth().getUser(decodedToken.uid)
 
-    const userInfo = await prisma.user.findUnique({
+    const existingUser = await prisma.user.findUnique({
       where: {
         email: decodedToken.email,
       },
-      select: {
-        email: true,
-        emailVerified: true,
-        fullName: true,
-        id: true,
-        profile: true,
-        profileImage: true,
-      },
     });
 
-    if (userInfo) {
-      return { decodedToken, userInfo };
+    if (existingUser) {
+      return await this.signIn({
+        password: decodedToken.uid,
+        email: existingUser.email
+      });
     }
 
-    const newUser = await this.userServices.createANewUser({
+    return await this.signUp({
+      password: decodedToken.uid,
       email: decodedToken.email,
-      fullName: decodedToken.name,
+      fullName: userData.displayName,
       profileImage: decodedToken.picture,
-      emailVerified: decodedToken.email_verified,
-      password: decodedToken.sub,
-    });
-
-    await admin.auth().setCustomUserClaims(decodedToken.uid, {
-      userId: newUser.user.id,
-    });
-
-    return { decodedToken, userInfo: newUser.user };
-  }
-
-  async createSessionCookie(accessToken: string): Promise<{
-    sessionCookie?: string;
-    expiresIn?: number;
-    error?: Error
-  }> {
-    const expiresIn = 60 * 60 * 24 * 5 * 1000;
-    const sessionCookie = await admin.auth().createSessionCookie(accessToken, {
-      expiresIn,
-    });
-
-    if (!sessionCookie) {
-      return {
-        error: new ConflictException('Could not create session cookie')
-      }
-    };
-
-    return { sessionCookie, expiresIn };
+      emailVerified: true
+    })
   }
 
   async getUserInfo(email: string) {
