@@ -28,8 +28,8 @@ import { FirebaseAuthGuard } from './auth/guard/firebase.guard';
     }),
     RedisModule.forRoot({
       config: {
-        //host: 'redis',
-        host: '127.0.0.1',
+        host: 'redis',
+        //host: '127.0.0.1',
         port: 6379
       }
     }),

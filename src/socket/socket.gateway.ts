@@ -64,7 +64,7 @@ export class SocketGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   async globalAllWebSocketFunction(payload: any, emitString: string) {
     try {
-      const usersInRoom = await this.redisService.getOnlineUsersInAConversation(payload.conversationId);
+      const usersInRoom = await this.redisService.getAllOnlineUsersInThePlatform();
 
       // Send the message to each user in the room
       Object.values(usersInRoom).forEach(socketId => {

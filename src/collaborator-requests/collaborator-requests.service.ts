@@ -241,6 +241,7 @@ export class CollaboratorRequestService {
         await this.profileService.getProfileThroughUserEmail(email);
       const { profile: receiver } =
         await this.profileService.getSomeoneProfileThroughId(receiverId);
+      console.log({ receiver, sender })
       const curentlyPending = await this.isPending(
         sender.id,
         postId,
@@ -255,7 +256,7 @@ export class CollaboratorRequestService {
         return {
           error: new CollaboratorException('Collaborator Requesting Pending')
         }
-      } else if (receiverId === sender.id) {
+      } else if (receiver.id === sender.id) {
         return {
           error: new CollaboratorException('Cannot Collaborate With Yourself')
         }
@@ -275,16 +276,6 @@ export class CollaboratorRequestService {
             content: content !== '' ? content : `Hello ${ownerOfPost[0]}, I’m interested in working with you.`
           }, sender.id, alreadyInAConversation.id)
 
-          await prisma.collaboratorRequest.create({
-            data: {
-              senderId: sender.id,
-              receiverId: receiver.id,
-              postId,
-              content: content,
-              status: 'accepted'
-            }
-          })
-
           return {
             success: new HttpException('Message sent!', HttpStatus.CREATED)
           }
@@ -296,16 +287,6 @@ export class CollaboratorRequestService {
             this.messageService.createMessage({
               content: content !== '' ? content : `Hello ${ownerOfPost[0]}, I’m interested in working with you.`
             }, sender.id, newConversation.id),
-
-            prisma.collaboratorRequest.create({
-              data: {
-                senderId: sender.id,
-                receiverId: receiver.id,
-                postId,
-                content: content,
-                status: 'accepted'
-              }
-            })
           ])
 
           return {
@@ -378,15 +359,8 @@ export class CollaboratorRequestService {
     error?: Error
     success?: HttpException
   }> {
-    const { user } = await this.userService.findOneUserByEmail(email);
-
-    if (!user) {
-      return {
-        error: new UnauthorizedException()
-      }
-    }
-    const currentUser =
-      await this.profileService.getSomeoneProfileThroughId(user.id);
+    const { profile: currentUser } =
+      await this.profileService.getProfileThroughUserEmail(email);
 
     const collaboratorRequest = await this.findById(requestId);
     const { profile: sender } = await this.profileService.getSomeoneProfileThroughId(collaboratorRequest.sender.id);
@@ -404,8 +378,9 @@ export class CollaboratorRequestService {
         error: new CollaboratorException('Collaborator Request Already Accepted')
       }
     }
+    console.log(collaboratorRequest.sender, currentUser)
 
-    if (collaboratorRequest.sender?.id === currentUser.profile.id) {
+    if (collaboratorRequest.sender?.id === currentUser.id) {
       return {
         error: new CollaboratorException('You cannot accept your own request')
       }
@@ -420,11 +395,11 @@ export class CollaboratorRequestService {
       },
     });
 
-    await this.collaboratorService.createCollaborators(sender.id, currentUser.profile.id)
+    await this.collaboratorService.createCollaborators(sender.id, currentUser.id)
 
     await Promise.all([
       this.socketGateway.globalSingleWebSocketFunction({
-        userId: String(currentUser.profile.id),
+        userId: String(currentUser.id),
         message: JSON.stringify(acceptedRequest)
       }, 'accepted-request'),
 
@@ -434,13 +409,13 @@ export class CollaboratorRequestService {
       }, 'accepted-request'),
 
       this.conversationService.createConversation(sender.id, {
-        receiverId: currentUser.profile.id
+        receiverId: currentUser.id
       }),
 
       prisma.notification.create({
         data: {
           requestId: requestId,
-          senderId: currentUser.profile.id,
+          senderId: currentUser.id,
           receiverId: collaboratorRequest.sender.id,
           action: 'acceptingRequest'
         }
