@@ -498,6 +498,7 @@ export class CollaboratorRequestService {
     success?: HttpException
   }> {
     const collaboratorRequest = await this.findById(id);
+
     if (!collaboratorRequest) return {
       error: new CollaboratorNotFoundException()
     }

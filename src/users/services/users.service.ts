@@ -1,4 +1,5 @@
 import {
+  ConflictException,
   HttpException,
   HttpStatus,
   Injectable,
@@ -213,18 +214,19 @@ export class UsersService {
         error: new UnauthorizedException()
       }
     }
-    const user = await prisma.user.findFirst({
+    const user = await prisma.profile.findFirst({
       where: {
         id: userId,
         fullName,
       },
     });
+
     if (!user) {
       return {
         error: new UserNotFoundException()
       }
     } else {
-      await prisma.user.update({
+      await prisma.profile.update({
         where: {
           id: userId,
         },
@@ -250,22 +252,36 @@ export class UsersService {
       }
     }
 
-    const user = await prisma.user.findFirst({
+    const currentProfile = await prisma.profile.findFirst({
       where: {
         id: userId,
         fullName,
       },
     });
-    if (!user) {
+
+    const currentUser = await prisma.user.findUnique({
+      where: {
+        id: currentProfile.userId
+      }
+    })
+
+    if (!currentProfile && !currentUser) {
       return {
-        error: new UnauthorizedException()
+        error: new ConflictException()
       }
     } else {
-      await prisma.user.delete({
+
+      await prisma.profile.delete({
         where: {
-          id: user.id,
+          id: currentProfile.id,
         },
       });
+
+      await prisma.user.delete({
+        where: {
+          id: currentUser.id
+        }
+      })
 
       return {
         success: new HttpException('Deleted', HttpStatus.ACCEPTED)

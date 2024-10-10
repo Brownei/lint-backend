@@ -64,13 +64,14 @@ export class FirebaseAuthGuard implements CanActivate {
         },
         select: {
           id: true,
-          email: true
+          email: true,
+          profile: true
         }
       })
 
       request.user = {
         email: user.email,
-        id: user.id,
+        id: user.profile.id,
       };
 
       return true
