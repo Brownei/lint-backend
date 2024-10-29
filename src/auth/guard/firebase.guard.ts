@@ -69,13 +69,16 @@ export class FirebaseAuthGuard implements CanActivate {
         }
       })
 
+      console.log(user)
+
       request.user = {
         email: user.email,
-        id: user.profile.id,
+        id: user.profile !== null ? user.profile.id : user.id,
       };
 
       return true
     } catch (_error) {
+      console.log(_error)
       this.logger.log('Unauthorized!');
       throw new UnauthorizedException('Unauthorized access!')
     }
